@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adaptive Quiz System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <!-- Landing Page -->
+    <div id="landingPage">
+        <div class="hero">
+            <h1 class="title">🎓 Adaptive Quiz System</h1>
+            <p class="subtitle">Test your knowledge with intelligent difficulty adjustment</p>
+        </div>
+
+        <div class="container">
+            <div class="mode-selection">
+                <!-- Adaptive Mode Card -->
+                <div class="mode-card" data-link="/adaptive">
+                    <div class="mode-icon">🎯</div>
+                    <h2>Adaptive Testing</h2>
+                    <p>Questions adapt to your ability level in real-time using machine learning algorithms.</p>
+                    <ul class="features">
+                        <li>✓ Real-time difficulty adjustment</li>
+                        <li>✓ Maximum information questions</li>
+                        <li>✓ 1-hour unlimited questions</li>
+                        <li>✓ Personalized ability tracking</li>
+                    </ul>
+                    <button class="btn btn-primary">Start Adaptive Quiz</button>
+                </div>
+
+                <!-- Section Mode Card -->
+                <div class="mode-card" data-link="/section">
+                    <div class="mode-icon">📊</div>
+                    <h2>Section-Based Testing</h2>
+                    <p>Progress through 4 difficulty levels with clear pass/fail criteria.</p>
+                    <ul class="features">
+                        <li>✓ 4 progressive difficulty sections</li>
+                        <li>✓ 10 questions per section</li>
+                        <li>✓ 60% pass threshold (6/10)</li>
+                        <li>✓ Unlock harder levels</li>
+                    </ul>
+                    <button class="btn btn-secondary">Start Section Quiz</button>
+                </div>
+            </div>
+
+            <!-- Info Section -->
+            <div class="info-section">
+                <h3>How It Works</h3>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="info-number">1</div>
+                        <h4>Choose Mode</h4>
+                        <p>Select between adaptive or section-based testing</p>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-number">2</div>
+                        <h4>Answer Questions</h4>
+                        <p>Solve problems and receive instant feedback</p>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-number">3</div>
+                        <h4>Track Progress</h4>
+                        <p>Monitor your ability and performance in real-time</p>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-number">4</div>
+                        <h4>Get Results</h4>
+                        <p>View detailed analytics and insights</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>Powered by Machine Learning | Item Response Theory</p>
+        </footer>
+    </div>
+
+    <script>
+        // Handle card clicks
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.mode-card');
+            cards.forEach(card => {
+                card.addEventListener('click', function() {
+                    const link = this.getAttribute('data-link');
+                    if (link) {
+                        window.location.href = link;
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

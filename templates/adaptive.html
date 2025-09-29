@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adaptive Quiz</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="quiz-container">
+        <!-- Header -->
+        <div class="quiz-header">
+            <button class="btn-back" onclick="window.location.href='/'">← Back</button>
+            <div class="stats-bar">
+                <div class="stat-item">
+                    <span class="stat-label">Questions</span>
+                    <span class="stat-value" id="questionCount">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Correct</span>
+                    <span class="stat-value" id="correctCount">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Accuracy</span>
+                    <span class="stat-value" id="accuracy">0%</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Time</span>
+                    <span class="stat-value" id="timer">60:00</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ability Meter -->
+        <div class="ability-section">
+            <div class="ability-label">Your Ability Level</div>
+            <div class="ability-meter">
+                <div class="ability-fill" id="abilityFill"></div>
+                <div class="ability-value" id="abilityValue">0.00</div>
+            </div>
+            <div class="ability-scale">
+                <span>Beginner (-3)</span>
+                <span>Intermediate (0)</span>
+                <span>Expert (+3)</span>
+            </div>
+        </div>
+
+        <!-- Question Card -->
+        <div class="question-card">
+            <div class="difficulty-badge" id="difficultyBadge">Moderate</div>
+            <div class="question-number" id="questionNumber">Question #1</div>
+            <div class="question-text" id="questionText">Loading question...</div>
+            
+            <div class="options-grid" id="optionsGrid">
+                <!-- Options will be dynamically inserted here -->
+            </div>
+
+            <button class="btn btn-primary btn-submit" id="submitBtn" onclick="submitAnswer()" disabled>
+                Submit Answer
+            </button>
+        </div>
+    </div>
+
+    <!-- Feedback Modal -->
+    <div class="modal" id="feedbackModal">
+        <div class="modal-content">
+            <div class="feedback-icon" id="feedbackIcon"></div>
+            <h2 id="feedbackTitle">Correct!</h2>
+            <p id="feedbackMessage">Great job!</p>
+            <button class="btn btn-primary" onclick="nextQuestion()">Next Question →</button>
+        </div>
+    </div>
+
+    <!-- Results Modal -->
+    <div class="modal" id="resultsModal">
+        <div class="modal-content results-content">
+            <h1>🎉 Quiz Complete!</h1>
+            <div class="results-grid">
+                <div class="result-item">
+                    <div class="result-value" id="totalQuestions">0</div>
+                    <div class="result-label">Questions</div>
+                </div>
+                <div class="result-item">
+                    <div class="result-value" id="totalCorrect">0</div>
+                    <div class="result-label">Correct</div>
+                </div>
+                <div class="result-item">
+                    <div class="result-value" id="finalAccuracy">0%</div>
+                    <div class="result-label">Accuracy</div>
+                </div>
+                <div class="result-item">
+                    <div class="result-value" id="finalAbility">0.00</div>
+                    <div class="result-label">Final Ability</div>
+                </div>
+            </div>
+            <div class="result-actions">
+                <button class="btn btn-primary" onclick="window.location.reload()">Try Again</button>
+                <button class="btn btn-secondary" onclick="window.location.href='/'">Home</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/adaptive.js') }}"></script>
+</body>
+</html>

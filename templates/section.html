@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Section-Based Quiz</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="quiz-container">
+        <!-- Header -->
+        <div class="quiz-header">
+            <button class="btn-back" onclick="window.location.href='/'">← Back</button>
+            <h1 class="section-title" id="sectionTitle">Section 1: Very Easy</h1>
+        </div>
+
+        <!-- Section Progress -->
+        <div class="section-progress">
+            <div class="section-step" id="section0">
+                <div class="step-circle">1</div>
+                <div class="step-label">Very Easy</div>
+            </div>
+            <div class="section-line"></div>
+            <div class="section-step" id="section1">
+                <div class="step-circle">2</div>
+                <div class="step-label">Easy</div>
+            </div>
+            <div class="section-line"></div>
+            <div class="section-step" id="section2">
+                <div class="step-circle">3</div>
+                <div class="step-label">Moderate</div>
+            </div>
+            <div class="section-line"></div>
+            <div class="section-step" id="section3">
+                <div class="step-circle">4</div>
+                <div class="step-label">Difficult</div>
+            </div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="progress-container">
+            <div class="progress-info">
+                <span>Progress: <span id="questionProgress">0/10</span></span>
+                <span>Score: <span id="sectionScore">0/10</span></span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+        </div>
+
+        <!-- Question Card -->
+        <div class="question-card">
+            <div class="question-number" id="questionNumber">Question #1</div>
+            <div class="question-text" id="questionText">Loading question...</div>
+            
+            <div class="options-grid" id="optionsGrid">
+                <!-- Options will be dynamically inserted here -->
+            </div>
+
+            <button class="btn btn-primary btn-submit" id="submitBtn" onclick="submitAnswer()" disabled>
+                Submit Answer
+            </button>
+        </div>
+    </div>
+
+    <!-- Feedback Modal -->
+    <div class="modal" id="feedbackModal">
+        <div class="modal-content">
+            <div class="feedback-icon" id="feedbackIcon"></div>
+            <h2 id="feedbackTitle">Correct!</h2>
+            <p id="feedbackMessage">Great job!</p>
+            <button class="btn btn-primary" onclick="handleNext()">Continue →</button>
+        </div>
+    </div>
+
+    <!-- Section Complete Modal -->
+    <div class="modal" id="sectionCompleteModal">
+        <div class="modal-content">
+            <div class="feedback-icon" id="sectionIcon"></div>
+            <h2 id="sectionResultTitle">Section Passed!</h2>
+            <p id="sectionResultMessage">Congratulations!</p>
+            
+            <div class="section-stats">
+                <div class="stat-box">
+                    <h3><span id="sectionCorrect">0</span>/<span id="sectionTotal">10</span></h3>
+                    <p>Correct Answers</p>
+                </div>
+            </div>
+            
+            <button class="btn btn-primary" onclick="handleSectionComplete()">Continue →</button>
+        </div>
+    </div>
+
+    <!-- Final Results Modal -->
+    <div class="modal" id="resultsModal">
+        <div class="modal-content results-content">
+            <h1 id="finalResultTitle">🎉 Quiz Complete!</h1>
+            
+            <div class="sections-summary" id="sectionsSummary">
+                <!-- Section results will be dynamically inserted here -->
+            </div>
+            
+            <div class="result-actions">
+                <button class="btn btn-primary" onclick="window.location.reload()">Try Again</button>
+                <button class="btn btn-secondary" onclick="window.location.href='/'">Home</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/section.js') }}"></script>
+</body>
+</html>

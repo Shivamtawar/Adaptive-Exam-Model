@@ -1,0 +1,57 @@
+{
+  "model_type": "RandomForest",
+  "n_questions": 80,
+  "difficulty_levels": 4,
+  "trained_date": "2025-09-30 02:48:04",
+  "test_accuracy": 0.5,
+  "feature_importance": [
+    {
+      "feature": "question_word_count",
+      "importance": 0.2666135642689348
+    },
+    {
+      "feature": "question_length",
+      "importance": 0.24975091246662298
+    },
+    {
+      "feature": "option_b_numeric",
+      "importance": 0.088190443459979
+    },
+    {
+      "feature": "option_a_numeric",
+      "importance": 0.07543175185436393
+    },
+    {
+      "feature": "option_c_numeric",
+      "importance": 0.0694389558642912
+    },
+    {
+      "feature": "options_mean",
+      "importance": 0.06761810247003437
+    },
+    {
+      "feature": "options_std",
+      "importance": 0.04878206255566506
+    },
+    {
+      "feature": "correct_option_value",
+      "importance": 0.043574466680345925
+    },
+    {
+      "feature": "option_d_numeric",
+      "importance": 0.03833590932244241
+    },
+    {
+      "feature": "options_range",
+      "importance": 0.03796477782063933
+    },
+    {
+      "feature": "answer_position",
+      "importance": 0.014299053236680964
+    },
+    {
+      "feature": "tag_encoded",
+      "importance": 0.0
+    }
+  ]
+}

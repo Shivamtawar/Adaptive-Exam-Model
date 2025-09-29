@@ -1,0 +1,41 @@
+{
+  "total_questions": 16,
+  "difficulty_distribution": {
+    "3": 4,
+    "0": 4,
+    "1": 4,
+    "2": 4
+  },
+  "answer_distribution": {
+    "1": 5,
+    "3": 5,
+    "0": 3,
+    "2": 3
+  },
+  "feature_columns": [
+    "id",
+    "question_text",
+    "option_a",
+    "option_b",
+    "option_c",
+    "option_d",
+    "answer",
+    "difficulty",
+    "difficulty_numeric",
+    "answer_numeric",
+    "tag_encoded",
+    "option_a_numeric",
+    "option_b_numeric",
+    "option_c_numeric",
+    "option_d_numeric",
+    "correct_option_value",
+    "question_length",
+    "question_word_count",
+    "options_mean",
+    "options_std",
+    "options_range",
+    "answer_position",
+    "difficulty_rarity",
+    "difficulty_bin"
+  ]
+}
