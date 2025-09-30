@@ -366,9 +366,9 @@ class QuizModelPackage:
 
 # Load the model
 print("Loading model...")
-with open('adaptive_quiz_model.pkl', 'rb') as f:
-    model_package = dill.load(f)
-print("Model loaded successfully!")
+with open("adaptive_quiz_model.pkl", "rb") as f:
+    model_package = dill.load(f, ignore=True)
+print("Model loaded!")
 
 # Store active quiz sessions
 active_sessions = {}
