@@ -19,6 +19,7 @@ import numpy as np
 from scipy.special import expit
 from scipy.optimize import minimize
 import json
+import dill
 
 # Custom JSON encoder to handle numpy types
 class NumpyEncoder(json.JSONEncoder):
@@ -365,7 +366,7 @@ class QuizModelPackage:
 # Load the model
 print("Loading model...")
 with open('adaptive_quiz_model.pkl', 'rb') as f:
-    model_package = pickle.load(f)
+    model_package = dill.load(f)
 print("Model loaded successfully!")
 
 # Store active quiz sessions
