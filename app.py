@@ -2,9 +2,11 @@
 Flask API for Adaptive Quiz System (FIXED ABILITY PROGRESSION)
 Save as: app.py
 
-Key Fix:
-- Ability now increases on correct answers
-- Ability now decreases on wrong answers
+Features:
+- Adaptive quiz with proper ability progression
+- Section-based quiz with reload on failure
+- Restart section when questions exhausted
+- 11th question logic when 5 correct + last wrong
 """
 
 from flask import Flask, request, jsonify, render_template
@@ -38,9 +40,7 @@ CORS(app)
 # ============================================================================
 
 class AdaptiveQuizSystem:
-    """
-    Adaptive Quiz System with FIXED ability progression
-    """
+    """Adaptive Quiz System with FIXED ability progression"""
     
     def __init__(self, questions_df, difficulty_model):
         self.questions_df = questions_df.copy()
@@ -58,35 +58,25 @@ class AdaptiveQuizSystem:
         if not responses:
             return 0.5  # Start at Easy level
         
-        # Start from Easy level
         ability = 0.5
-        learning_rate = 0.2  # How much each answer affects ability
+        learning_rate = 0.2
         
         for i, (difficulty, correct) in enumerate(responses):
             if correct:
-                # CORRECT: Increase ability from current position
                 target = ability + 0.4
             else:
-                # WRONG: Decrease ability from current position
                 target = ability - 0.4
             
-            # Gradually update ability (smooth transitions)
             ability = ability + learning_rate * (target - ability)
-            
-            # Slightly increase learning rate with more data
             learning_rate = min(0.3, learning_rate + 0.01)
         
-        # Keep ability in valid range [0, 3]
         return np.clip(ability, 0.0, 3.0)
     
     def get_question_probability(self, question_difficulty, user_ability):
         return expit(user_ability - question_difficulty)
     
     def select_next_question(self, mode='adaptive', target_difficulty=None):
-        """
-        Select next question with SMOOTH progression
-        Prioritizes questions at current level, allows ±1 level
-        """
+        """Select next question with SMOOTH progression"""
         available_questions = self.questions_df[
             ~self.questions_df['id'].isin(self.asked_questions)
         ].copy()
@@ -95,25 +85,18 @@ class AdaptiveQuizSystem:
             return None
         
         if mode == 'adaptive':
-            # Map ability to target difficulty level (round to nearest integer)
             target_level = int(round(self.user_ability))
             target_level = np.clip(target_level, 0, 3)
             
-            # Prioritize questions at target level, but allow ±1 level
             available_questions['difficulty_diff'] = abs(
                 available_questions['difficulty_numeric'] - target_level
             )
             
-            # Strong preference for exact match, moderate for ±1
-            # This prevents skipping difficulty levels
             available_questions['score'] = available_questions['difficulty_diff'].apply(
                 lambda x: 0 if x == 0 else (1.0 if x == 1 else 5.0)
             )
             
-            # Add small randomness within priority groups
             available_questions['score'] += np.random.uniform(0, 0.3, len(available_questions))
-            
-            # Select question with lowest score (highest priority)
             next_question = available_questions.nsmallest(1, 'score').iloc[0]
             
         elif mode == 'fixed' and target_difficulty is not None:
@@ -170,7 +153,7 @@ class AdaptiveQuizSystem:
 
 
 class SectionBasedQuizSystem:
-    """Section-based quiz with progression rules"""
+    """Section-based quiz with progression rules and reload functionality"""
     
     def __init__(self, questions_df):
         self.questions_df = questions_df.copy()
@@ -185,20 +168,54 @@ class SectionBasedQuizSystem:
         self.section_answers = []
         self.asked_question_ids = set()
         self.completed_sections = []
+        self.section_exhausted = False
         
-    def start_section(self, section_num):
+    def start_section(self, section_num, reset_section=False):
+        """Start or restart a section"""
         if section_num >= len(self.sections):
             return None
         
         self.current_section = section_num
-        self.section_questions = []
-        self.section_answers = []
+        
+        if reset_section:
+            self.section_questions = []
+            self.section_answers = []
+            self.section_exhausted = False
         
         section_difficulty = self.sections[section_num]['difficulty']
         available = self.questions_df[
             (self.questions_df['difficulty_numeric'] == section_difficulty) &
             (~self.questions_df['id'].isin(self.asked_question_ids))
         ]
+        
+        if len(available) == 0:
+            self.section_exhausted = True
+            return None
+        
+        if len(available) < 10:
+            questions = available
+        else:
+            questions = available.sample(10, random_state=None)
+        
+        self.section_questions = questions.to_dict('records')
+        for q in self.section_questions:
+            self.asked_question_ids.add(q['id'])
+        
+        return self.section_questions
+    
+    def reload_section_questions(self):
+        """Load another batch of 10 unique questions from same section after failing"""
+        section_difficulty = self.sections[self.current_section]['difficulty']
+        available = self.questions_df[
+            (self.questions_df['difficulty_numeric'] == section_difficulty) &
+            (~self.questions_df['id'].isin(self.asked_question_ids))
+        ]
+        
+        if len(available) == 0:
+            self.section_exhausted = True
+            return None
+        
+        self.section_answers = []
         
         if len(available) < 10:
             questions = available
@@ -212,6 +229,7 @@ class SectionBasedQuizSystem:
         return self.section_questions
     
     def submit_section_answer(self, question_index, user_answer):
+        """Submit answer for current section question"""
         if question_index >= len(self.section_questions):
             return None
         
@@ -230,21 +248,36 @@ class SectionBasedQuizSystem:
         return is_correct
     
     def check_section_completion(self):
-        if len(self.section_answers) < 10:
+        """
+        Check section completion status
+        Returns: (is_complete, passed, needs_11th_question)
+        """
+        total_answered = len(self.section_answers)
+        
+        # Need at least 10 answers to check completion
+        if total_answered < 10:
             return False, False, False
         
         correct_count = sum(1 for a in self.section_answers if a['is_correct'])
         threshold = self.sections[self.current_section]['threshold']
+        
+        # Check if last answer was wrong
         last_wrong = not self.section_answers[-1]['is_correct']
         
+        # Passed: 6 or more correct
         if correct_count >= threshold:
             return True, True, False
-        elif correct_count == threshold - 1 and last_wrong:
+        
+        # Special case: 5 correct and last question wrong -> give 11th question
+        elif correct_count == threshold - 1 and last_wrong and total_answered == 10:
             return False, False, True
+        
+        # Failed: Less than 6 correct after 10 questions
         else:
             return True, False, False
     
     def get_11th_question(self):
+        """Get unique 11th question from same difficulty"""
         section_difficulty = self.sections[self.current_section]['difficulty']
         available = self.questions_df[
             (self.questions_df['difficulty_numeric'] == section_difficulty) &
@@ -261,6 +294,7 @@ class SectionBasedQuizSystem:
         return question
     
     def proceed_to_next_section(self):
+        """Move to next section after passing current one"""
         self.completed_sections.append({
             'section': self.current_section,
             'correct': sum(1 for a in self.section_answers if a['is_correct']),
@@ -276,12 +310,19 @@ class SectionBasedQuizSystem:
         return self.start_section(self.current_section)
     
     def get_progress(self):
+        """Get overall progress with detailed information"""
+        correct_in_section = sum(1 for a in self.section_answers if a['is_correct'])
+        total_in_section = len(self.section_answers)
+        
         return {
             'current_section': self.current_section,
             'section_name': self.sections[self.current_section]['name'],
-            'questions_answered': len(self.section_answers),
-            'correct_in_section': sum(1 for a in self.section_answers if a['is_correct']),
-            'completed_sections': self.completed_sections
+            'questions_answered': total_in_section,
+            'correct_in_section': correct_in_section,
+            'completed_sections': self.completed_sections,
+            'section_exhausted': self.section_exhausted,
+            'threshold': self.sections[self.current_section]['threshold'],
+            'total_questions_in_batch': len(self.section_questions)
         }
 
 
@@ -566,36 +607,88 @@ def submit_section_answer():
             answer_map = {'a': 0, 'b': 1, 'c': 2, 'd': 3}
             user_answer = answer_map.get(user_answer.lower(), 0)
         
+        # Submit the answer
         is_correct = quiz.submit_section_answer(current_index, user_answer)
-        is_complete, passed, needs_11th = quiz.check_section_completion()
+        
+        # Get current stats
+        correct_count = sum(1 for a in quiz.section_answers if a['is_correct'])
+        total_answered = len(quiz.section_answers)
+        
+        # Debug info
+        print(f"\n=== Section Answer Debug ===")
+        print(f"Section: {quiz.current_section} ({quiz.sections[quiz.current_section]['name']})")
+        print(f"Question Index: {current_index}")
+        print(f"Total Answered: {total_answered}")
+        print(f"Correct Count: {correct_count}")
+        print(f"Threshold: {quiz.sections[quiz.current_section]['threshold']}")
+        print(f"Is Correct: {is_correct}")
         
         response = {
             'success': True,
             'is_correct': is_correct,
-            'question_index': current_index
+            'question_index': current_index,
+            'correct_count': correct_count,
+            'total_answered': total_answered,
+            'threshold': quiz.sections[quiz.current_section]['threshold']
         }
         
-        if needs_11th:
-            question_11 = quiz.get_11th_question()
-            response['needs_11th_question'] = True
-            response['question_11'] = format_question(question_11)
-            session['current_question_index'] += 1
+        # Check if we've answered 10 questions
+        if total_answered >= 10:
+            is_complete, passed, needs_11th = quiz.check_section_completion()
             
-        elif is_complete:
-            response['section_complete'] = True
-            response['section_passed'] = passed
+            print(f"Check Completion: complete={is_complete}, passed={passed}, needs_11th={needs_11th}")
             
-            if passed:
-                next_questions = quiz.proceed_to_next_section()
-                if next_questions is not None:
-                    response['next_section'] = quiz.current_section
-                    response['next_question'] = format_question(next_questions[0])
-                    session['current_question_index'] = 0
+            if needs_11th:
+                # User has 5 correct and last question was wrong - give 11th question
+                question_11 = quiz.get_11th_question()
+                if question_11 is not None:
+                    response['needs_11th_question'] = True
+                    response['question_11'] = format_question(question_11)
+                    response['message'] = 'You need one more correct answer! Here is your 11th question.'
+                    session['current_question_index'] += 1
+                    print("Giving 11th question")
                 else:
-                    response['quiz_complete'] = True
-            else:
-                response['quiz_failed'] = True
+                    response['section_exhausted'] = True
+                    response['message'] = 'No more questions available in this section. Please restart the test.'
+                    print("No 11th question available - section exhausted")
+                
+            elif is_complete:
+                response['section_complete'] = True
+                response['section_passed'] = passed
+                
+                print(f"Section complete! Passed: {passed}")
+                
+                if passed:
+                    # User passed - move to next section
+                    next_questions = quiz.proceed_to_next_section()
+                    if next_questions is not None:
+                        response['next_section'] = quiz.current_section
+                        response['next_section_name'] = quiz.sections[quiz.current_section]['name']
+                        response['next_question'] = format_question(next_questions[0])
+                        response['message'] = f'Congratulations! Moving to {quiz.sections[quiz.current_section]["name"]} section.'
+                        session['current_question_index'] = 0
+                        print(f"Moving to section {quiz.current_section}")
+                    else:
+                        response['quiz_complete'] = True
+                        response['message'] = 'Congratulations! You have completed all sections!'
+                        print("Quiz complete!")
+                else:
+                    # User failed - reload same section with new questions
+                    print(f"Section failed. Reloading section {quiz.current_section}")
+                    new_questions = quiz.reload_section_questions()
+                    if new_questions is not None:
+                        response['section_failed'] = True
+                        response['reload_section'] = True
+                        response['message'] = f'You need at least 6 correct answers to proceed. Try again with new questions from {quiz.sections[quiz.current_section]["name"]} section.'
+                        response['next_question'] = format_question(new_questions[0])
+                        session['current_question_index'] = 0
+                        print(f"Loaded {len(new_questions)} new questions")
+                    else:
+                        response['section_exhausted'] = True
+                        response['message'] = 'No more questions available in this section. Please restart the test.'
+                        print("Section exhausted - no more questions")
         else:
+            # Continue to next question in current batch
             session['current_question_index'] += 1
             next_index = session['current_question_index']
             
@@ -603,6 +696,8 @@ def submit_section_answer():
                 response['next_question'] = format_question(
                     quiz.section_questions[next_index]
                 )
+            else:
+                response['error'] = 'Unexpected state: no next question available'
         
         response['progress'] = quiz.get_progress()
         
@@ -632,6 +727,64 @@ def get_section_progress(session_id):
             'success': True,
             'progress': progress
         }), 200
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/section/restart', methods=['POST'])
+def restart_section():
+    """Restart the current section by clearing asked questions for that section"""
+    try:
+        data = request.json
+        session_id = data.get('session_id')
+        
+        if session_id not in active_sessions:
+            return jsonify({
+                'success': False,
+                'error': 'Invalid session ID'
+            }), 404
+        
+        session = active_sessions[session_id]
+        quiz = session['quiz']
+        current_section_num = quiz.current_section
+        
+        # Get all question IDs from current section
+        section_difficulty = quiz.sections[current_section_num]['difficulty']
+        section_question_ids = quiz.questions_df[
+            quiz.questions_df['difficulty_numeric'] == section_difficulty
+        ]['id'].tolist()
+        
+        # Remove only current section's questions from asked_questions
+        quiz.asked_question_ids = {
+            qid for qid in quiz.asked_question_ids 
+            if qid not in section_question_ids
+        }
+        
+        # Reset section state
+        quiz.section_exhausted = False
+        
+        # Start the section fresh
+        questions = quiz.start_section(current_section_num, reset_section=True)
+        
+        if questions is not None:
+            session['current_question_index'] = 0
+            
+            return jsonify({
+                'success': True,
+                'message': f'Restarting {quiz.sections[current_section_num]["name"]} section',
+                'section': current_section_num,
+                'section_name': quiz.sections[current_section_num]['name'],
+                'question': format_question(questions[0]),
+                'total_questions_in_section': len(questions)
+            }), 200
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'Failed to restart section'
+            }), 500
         
     except Exception as e:
         return jsonify({
@@ -772,4 +925,23 @@ def internal_error(error):
 # ============================================================================
 
 if __name__ == '__main__':
+    print("\n" + "="*60)
+    print("ADAPTIVE QUIZ SYSTEM - Flask API Server")
+    print("="*60)
+    print("\nFeatures:")
+    print("  - Adaptive quiz with ability progression")
+    print("  - Section-based quiz with auto-reload on failure")
+    print("  - 11th question logic (5 correct + last wrong)")
+    print("  - Section restart when questions exhausted")
+    print("\nAPI Endpoints:")
+    print("  POST /api/adaptive/start - Start adaptive quiz")
+    print("  POST /api/adaptive/submit - Submit adaptive answer")
+    print("  POST /api/section/start - Start section quiz")
+    print("  POST /api/section/submit - Submit section answer")
+    print("  POST /api/section/restart - Restart current section")
+    print("  GET  /api/section/progress/<session_id> - Get progress")
+    print("  GET  /api/health - Health check")
+    print("\nServer starting on http://0.0.0.0:5000")
+    print("="*60 + "\n")
+    
     app.run(debug=True, host='0.0.0.0', port=5000)
