@@ -20,7 +20,8 @@ from scipy.special import expit
 from scipy.optimize import minimize
 import json
 import dill
-from quiz_model_package import QuizModelPackage
+import sys
+import types
 
 # Custom JSON encoder to handle numpy types
 class NumpyEncoder(json.JSONEncoder):
@@ -364,10 +365,28 @@ class QuizModelPackage:
         return filtered.sample(n).to_dict('records')
 
 
+# ============================================================================
+# REGISTER CLASSES WITH DILL (FIX FOR GUNICORN)
+# ============================================================================
+
+# Create a temporary module to hold the classes
+temp_module = types.ModuleType('quiz_model_package')
+temp_module.QuizModelPackage = QuizModelPackage
+temp_module.AdaptiveQuizSystem = AdaptiveQuizSystem
+temp_module.SectionBasedQuizSystem = SectionBasedQuizSystem
+sys.modules['quiz_model_package'] = temp_module
+
+# Also register in __main__ for backwards compatibility
+current_module = sys.modules.get('__main__')
+if current_module:
+    current_module.QuizModelPackage = QuizModelPackage
+    current_module.AdaptiveQuizSystem = AdaptiveQuizSystem
+    current_module.SectionBasedQuizSystem = SectionBasedQuizSystem
+
 # Load the model
 print("Loading model...")
 with open("adaptive_quiz_model.pkl", "rb") as f:
-    model_package = dill.load(f, ignore=True)
+    model_package = dill.load(f)
 print("Model loaded!")
 
 # Store active quiz sessions
