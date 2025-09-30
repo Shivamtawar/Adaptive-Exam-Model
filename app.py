@@ -20,6 +20,7 @@ from scipy.special import expit
 from scipy.optimize import minimize
 import json
 import dill
+from quiz_model_package import QuizModelPackage
 
 # Custom JSON encoder to handle numpy types
 class NumpyEncoder(json.JSONEncoder):
