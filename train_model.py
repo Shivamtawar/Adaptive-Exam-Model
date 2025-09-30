@@ -1,12 +1,10 @@
 """
-Adaptive Quiz System - ML Model Training
-Save this as: adaptive_quiz_model.ipynb or .py
+Adaptive Quiz System - ML Model Training (FIXED ABILITY PROGRESSION)
+Save this as: adaptive_quiz_model.py or .ipynb
 
-This notebook trains an adaptive quiz system that:
-1. Predicts question difficulty
-2. Estimates user ability
-3. Selects optimal next questions
-4. Implements section-based testing
+Key Fix:
+- Ability now increases on correct answers, decreases on wrong answers
+- Uses current ability as reference, not question difficulty
 """
 
 # ============================================================================
@@ -31,7 +29,7 @@ from scipy.special import expit  # sigmoid function
 import warnings
 warnings.filterwarnings('ignore')
 
-print("✅ All libraries imported successfully!")
+print("All libraries imported successfully!")
 
 # ============================================================================
 # CELL 2: Load Preprocessed Data
@@ -102,8 +100,8 @@ y_pred_test = rf_model.predict(X_test)
 train_accuracy = accuracy_score(y_train, y_pred_train)
 test_accuracy = accuracy_score(y_test, y_pred_test)
 
-print(f"\n✅ Training Accuracy: {train_accuracy:.4f}")
-print(f"✅ Test Accuracy: {test_accuracy:.4f}")
+print(f"\nTraining Accuracy: {train_accuracy:.4f}")
+print(f"Test Accuracy: {test_accuracy:.4f}")
 
 print("\nClassification Report (Test Set):")
 print(classification_report(y_test, y_pred_test, 
@@ -119,52 +117,59 @@ print("\nTop 5 Most Important Features:")
 print(feature_importance.head())
 
 # ============================================================================
-# CELL 6: Adaptive Testing System - IRT Implementation
+# CELL 6: Adaptive Testing System - FIXED ABILITY CALCULATION
 # ============================================================================
 class AdaptiveQuizSystem:
     """
-    Adaptive Quiz System using Item Response Theory (IRT)
+    Adaptive Quiz System with FIXED ability progression
+    Key fix: Ability increases on correct, decreases on wrong
     """
     
     def __init__(self, questions_df, difficulty_model):
         self.questions_df = questions_df.copy()
         self.difficulty_model = difficulty_model
-        self.user_ability = 0.0  # Initial ability estimate (neutral)
+        self.user_ability = 0.5  # Start at Easy level
         self.response_history = []
         self.asked_questions = set()
         
     def estimate_ability(self, responses):
         """
-        Estimate user ability using Maximum Likelihood Estimation
-        responses: list of (difficulty, correct) tuples
+        FIXED: Estimate user ability with proper progression
+        - Correct answer → ability increases
+        - Wrong answer → ability decreases
         """
         if not responses:
-            return 0.0
+            return 0.5  # Start at Easy level
         
-        def negative_log_likelihood(ability):
-            nll = 0
-            for difficulty, correct in responses:
-                # IRT 1-parameter logistic model (Rasch model)
-                prob = expit(ability - difficulty)
-                if correct:
-                    nll -= np.log(prob + 1e-10)
-                else:
-                    nll -= np.log(1 - prob + 1e-10)
-            return nll
+        # Start from Easy level
+        ability = 0.5
+        learning_rate = 0.2  # How much each answer affects ability
         
-        result = minimize(negative_log_likelihood, x0=0.0, method='BFGS')
-        return result.x[0]
+        for i, (difficulty, correct) in enumerate(responses):
+            if correct:
+                # CORRECT: Increase ability from current position
+                target = ability + 0.4
+            else:
+                # WRONG: Decrease ability from current position
+                target = ability - 0.4
+            
+            # Gradually update ability (smooth transitions)
+            ability = ability + learning_rate * (target - ability)
+            
+            # Slightly increase learning rate with more data
+            learning_rate = min(0.3, learning_rate + 0.01)
+        
+        # Keep ability in valid range [0, 3]
+        return np.clip(ability, 0.0, 3.0)
     
     def get_question_probability(self, question_difficulty, user_ability):
-        """
-        Calculate probability of correct answer using IRT
-        """
+        """Calculate probability of correct answer using IRT"""
         return expit(user_ability - question_difficulty)
     
     def select_next_question(self, mode='adaptive', target_difficulty=None):
         """
-        Select next question based on current ability
-        mode: 'adaptive' or 'fixed'
+        Select next question with smooth progression
+        Prioritizes questions at current level, allows ±1 level
         """
         available_questions = self.questions_df[
             ~self.questions_df['id'].isin(self.asked_questions)
@@ -174,16 +179,27 @@ class AdaptiveQuizSystem:
             return None
         
         if mode == 'adaptive':
-            # Select question closest to user's current ability
-            available_questions['score'] = abs(
-                available_questions['difficulty_numeric'] - self.user_ability
+            # Map ability to target difficulty level
+            target_level = int(round(self.user_ability))
+            target_level = np.clip(target_level, 0, 3)
+            
+            # Calculate difficulty difference
+            available_questions['difficulty_diff'] = abs(
+                available_questions['difficulty_numeric'] - target_level
             )
-            # Add some randomness to avoid predictability
-            available_questions['score'] += np.random.normal(0, 0.1, len(available_questions))
+            
+            # Strong preference for exact match, moderate for ±1
+            available_questions['score'] = available_questions['difficulty_diff'].apply(
+                lambda x: 0 if x == 0 else (1.0 if x == 1 else 5.0)
+            )
+            
+            # Add small randomness within priority groups
+            available_questions['score'] += np.random.uniform(0, 0.3, len(available_questions))
+            
+            # Select question with lowest score (highest priority)
             next_question = available_questions.nsmallest(1, 'score').iloc[0]
             
         elif mode == 'fixed' and target_difficulty is not None:
-            # Select from specific difficulty level
             difficulty_questions = available_questions[
                 available_questions['difficulty_numeric'] == target_difficulty
             ]
@@ -192,15 +208,12 @@ class AdaptiveQuizSystem:
             else:
                 next_question = difficulty_questions.sample(1).iloc[0]
         else:
-            # Random selection
             next_question = available_questions.sample(1).iloc[0]
         
         return next_question
     
     def submit_answer(self, question_id, user_answer, correct_answer):
-        """
-        Process user's answer and update ability
-        """
+        """Process user's answer and update ability"""
         is_correct = (user_answer == correct_answer)
         
         question = self.questions_df[self.questions_df['id'] == question_id].iloc[0]
@@ -243,7 +256,7 @@ class AdaptiveQuizSystem:
             'response_history': self.response_history
         }
 
-print("\n✅ Adaptive Quiz System class created!")
+print("\nAdaptive Quiz System class created (FIXED)!")
 
 # ============================================================================
 # CELL 7: Section-Based Testing System
@@ -251,7 +264,7 @@ print("\n✅ Adaptive Quiz System class created!")
 class SectionBasedQuizSystem:
     """
     Section-based quiz with progression rules:
-    - 3 sections (Easy, Moderate, Difficult)
+    - 4 sections (Very Easy, Easy, Moderate, Difficult)
     - 10 questions per section
     - Need 6/10 correct to proceed
     - If last question wrong, get 11th unique question
@@ -288,7 +301,7 @@ class SectionBasedQuizSystem:
         ]
         
         if len(available) < 10:
-            print(f"⚠️ Warning: Only {len(available)} questions available in section {section_num}")
+            print(f"Warning: Only {len(available)} questions available in section {section_num}")
             questions = available
         else:
             questions = available.sample(10, random_state=None)
@@ -385,15 +398,13 @@ class SectionBasedQuizSystem:
             'completed_sections': self.completed_sections
         }
 
-print("\n✅ Section-Based Quiz System class created!")
+print("Section-Based Quiz System class created!")
 
 # ============================================================================
 # CELL 8: Create Model Package for Flask
 # ============================================================================
 class QuizModelPackage:
-    """
-    Complete package for Flask API
-    """
+    """Complete package for Flask API"""
     
     def __init__(self, difficulty_model, questions_df, feature_cols, scaler=None):
         self.difficulty_model = difficulty_model
@@ -406,7 +417,8 @@ class QuizModelPackage:
             'difficulty_levels': questions_df['difficulty_numeric'].nunique(),
             'trained_date': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
             'test_accuracy': test_accuracy,
-            'feature_importance': feature_importance.to_dict('records')
+            'feature_importance': feature_importance.to_dict('records'),
+            'version': '2.1_fixed_ability'
         }
     
     def create_adaptive_quiz(self):
@@ -446,7 +458,8 @@ model_package = QuizModelPackage(
     scaler=None
 )
 
-print("\n✅ Model package created!")
+print("\nModel package created!")
+print(f"Version: {model_package.metadata['version']}")
 print(f"Metadata: {json.dumps(model_package.metadata, indent=2)}")
 
 # ============================================================================
@@ -456,18 +469,18 @@ print(f"Metadata: {json.dumps(model_package.metadata, indent=2)}")
 with open('adaptive_quiz_model.pkl', 'wb') as f:
     pickle.dump(model_package, f)
 
-print("\n✅ Model saved to 'adaptive_quiz_model.pkl'")
+print("\nModel saved to 'adaptive_quiz_model.pkl'")
 
 # Also save metadata separately for reference
 with open('model_metadata.json', 'w') as f:
     json.dump(model_package.metadata, f, indent=2)
 
-print("✅ Metadata saved to 'model_metadata.json'")
+print("Metadata saved to 'model_metadata.json'")
 
 # Get file size
 import os
 file_size = os.path.getsize('adaptive_quiz_model.pkl') / (1024 * 1024)  # MB
-print(f"\n📦 Model file size: {file_size:.2f} MB")
+print(f"\nModel file size: {file_size:.2f} MB")
 
 # ============================================================================
 # CELL 10: Test Loading the Model (Verification)
@@ -480,66 +493,86 @@ print("="*60)
 with open('adaptive_quiz_model.pkl', 'rb') as f:
     loaded_model = pickle.load(f)
 
-print("✅ Model loaded successfully!")
+print("Model loaded successfully!")
 print(f"Model type: {loaded_model.metadata['model_type']}")
+print(f"Version: {loaded_model.metadata['version']}")
 print(f"Number of questions: {loaded_model.metadata['n_questions']}")
 print(f"Test accuracy: {loaded_model.metadata['test_accuracy']:.4f}")
 
 # Test adaptive quiz creation
 test_adaptive = loaded_model.create_adaptive_quiz()
-print("\n✅ Adaptive quiz instance created!")
+print("\nAdaptive quiz instance created!")
+print(f"Starting ability: {test_adaptive.user_ability}")
 
 # Test section quiz creation
 test_section = loaded_model.create_section_quiz()
-print("✅ Section quiz instance created!")
+print("Section quiz instance created!")
 
 # Test getting random questions
 random_questions = loaded_model.get_random_questions(n=5)
-print(f"\n✅ Retrieved {len(random_questions)} random questions")
+print(f"\nRetrieved {len(random_questions)} random questions")
 print(f"First question ID: {random_questions[0]['id']}")
 
 # ============================================================================
-# CELL 11: Example Usage Demo
+# CELL 11: Example Usage Demo - Shows FIXED Progression
 # ============================================================================
 print("\n" + "="*60)
-print("DEMO: Adaptive Quiz Flow")
+print("DEMO: Adaptive Quiz with FIXED Ability Progression")
 print("="*60)
 
 # Create adaptive quiz
 demo_quiz = loaded_model.create_adaptive_quiz()
 
-# Simulate 5 questions
-for i in range(5):
+print(f"\nStarting ability: {demo_quiz.user_ability:.2f} (Easy level)")
+print("\nSimulating answers (mostly correct to show progression)...\n")
+
+# Simulate 15 questions to show progression
+for i in range(15):
     question = demo_quiz.select_next_question(mode='adaptive')
     if question is None:
         break
     
-    print(f"\nQuestion {i+1}:")
-    print(f"Difficulty: {question['difficulty']}")
-    print(f"Current User Ability: {demo_quiz.user_ability:.2f}")
+    difficulty_name = ['Very Easy', 'Easy', 'Moderate', 'Difficult'][int(question['difficulty_numeric'])]
     
-    # Simulate answer (randomly correct/incorrect)
-    user_answer = np.random.randint(0, 4)
+    print(f"Q{i+1}: {difficulty_name:12} | Ability: {demo_quiz.user_ability:.2f}", end=" | ")
+    
+    # Simulate answer (80% correct)
+    is_correct_sim = np.random.random() < 0.8
+    user_answer = question['answer_numeric'] if is_correct_sim else (question['answer_numeric'] + 1) % 4
+    
     is_correct, new_ability = demo_quiz.submit_answer(
         question['id'], 
         user_answer, 
         question['answer_numeric']
     )
     
-    print(f"Answer: {'✅ Correct' if is_correct else '❌ Wrong'}")
-    print(f"Updated Ability: {new_ability:.2f}")
+    print(f"{'✓ CORRECT' if is_correct else '✗ WRONG':10} → New Ability: {new_ability:.2f}")
 
 stats = demo_quiz.get_stats()
-print(f"\n📊 Final Stats:")
+print(f"\nFinal Stats:")
 print(f"Total Questions: {stats['total_questions']}")
 print(f"Correct Answers: {stats['correct_answers']}")
 print(f"Accuracy: {stats['accuracy']:.2%}")
 print(f"Final Ability: {stats['current_ability']:.2f}")
 
+# Show progression through difficulty levels
+difficulty_counts = {}
+for r in stats['response_history']:
+    diff = int(r['difficulty'])
+    difficulty_counts[diff] = difficulty_counts.get(diff, 0) + 1
+
+print("\nQuestions by Difficulty Level:")
+for diff in sorted(difficulty_counts.keys()):
+    diff_name = ['Very Easy', 'Easy', 'Moderate', 'Difficult'][diff]
+    print(f"  {diff_name}: {difficulty_counts[diff]} questions")
+
 print("\n" + "="*60)
-print("✨ MODEL TRAINING COMPLETE! ✨")
+print("MODEL TRAINING COMPLETE - ABILITY BUG FIXED!")
 print("="*60)
 print("\nFiles created:")
-print("  📦 adaptive_quiz_model.pkl (ready for Flask)")
-print("  📄 model_metadata.json (model info)")
-print("\nNext step: Integrate with Flask API!")
+print("  ✓ adaptive_quiz_model.pkl (ready for Flask)")
+print("  ✓ model_metadata.json (model info)")
+print("\nKey Fix:")
+print("  ✓ Ability now INCREASES on correct answers")
+print("  ✓ Ability now DECREASES on wrong answers")
+print("  ✓ Smooth, gradual progression through difficulty levels")

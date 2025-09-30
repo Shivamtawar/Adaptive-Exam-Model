@@ -1,6 +1,10 @@
 """
-Flask API for Adaptive Quiz System
+Flask API for Adaptive Quiz System (FIXED ABILITY PROGRESSION)
 Save as: app.py
+
+Key Fix:
+- Ability now increases on correct answers
+- Ability now decreases on wrong answers
 """
 
 from flask import Flask, request, jsonify, render_template
@@ -12,60 +16,77 @@ import pandas as pd
 import numpy as np
 from scipy.special import expit
 from scipy.optimize import minimize
-from flask.json.provider import DefaultJSONProvider
+import json
 
-class NumpyJSONProvider(DefaultJSONProvider):
-    """Handle numpy types in JSON serialization"""
+# Custom JSON encoder to handle numpy types
+class NumpyEncoder(json.JSONEncoder):
     def default(self, obj):
-        if isinstance(obj, (np.integer, np.int64, np.int32)):
+        if isinstance(obj, np.integer):
             return int(obj)
-        if isinstance(obj, (np.floating, np.float64, np.float32)):
+        elif isinstance(obj, np.floating):
             return float(obj)
-        if isinstance(obj, np.ndarray):
+        elif isinstance(obj, np.ndarray):
             return obj.tolist()
-        if isinstance(obj, (np.bool_, bool)):
-            return bool(obj)
-        return super().default(obj)
+        return super(NumpyEncoder, self).default(obj)
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for frontend integration
-app.json = NumpyJSONProvider(app)
+app.json_encoder = NumpyEncoder
+CORS(app)
 
 # ============================================================================
 # DEFINE CLASSES BEFORE LOADING MODEL (CRITICAL!)
 # ============================================================================
 
 class AdaptiveQuizSystem:
-    """Adaptive Quiz System using Item Response Theory (IRT)"""
+    """
+    Adaptive Quiz System with FIXED ability progression
+    """
     
     def __init__(self, questions_df, difficulty_model):
         self.questions_df = questions_df.copy()
         self.difficulty_model = difficulty_model
-        self.user_ability = 0.0
+        self.user_ability = 0.5  # Start at Easy level
         self.response_history = []
         self.asked_questions = set()
         
     def estimate_ability(self, responses):
+        """
+        FIXED: Estimate user ability with proper progression
+        - Correct answer → ability increases
+        - Wrong answer → ability decreases
+        """
         if not responses:
-            return 0.0
+            return 0.5  # Start at Easy level
         
-        def negative_log_likelihood(ability):
-            nll = 0
-            for difficulty, correct in responses:
-                prob = expit(ability - difficulty)
-                if correct:
-                    nll -= np.log(prob + 1e-10)
-                else:
-                    nll -= np.log(1 - prob + 1e-10)
-            return nll
+        # Start from Easy level
+        ability = 0.5
+        learning_rate = 0.2  # How much each answer affects ability
         
-        result = minimize(negative_log_likelihood, x0=0.0, method='BFGS')
-        return result.x[0]
+        for i, (difficulty, correct) in enumerate(responses):
+            if correct:
+                # CORRECT: Increase ability from current position
+                target = ability + 0.4
+            else:
+                # WRONG: Decrease ability from current position
+                target = ability - 0.4
+            
+            # Gradually update ability (smooth transitions)
+            ability = ability + learning_rate * (target - ability)
+            
+            # Slightly increase learning rate with more data
+            learning_rate = min(0.3, learning_rate + 0.01)
+        
+        # Keep ability in valid range [0, 3]
+        return np.clip(ability, 0.0, 3.0)
     
     def get_question_probability(self, question_difficulty, user_ability):
         return expit(user_ability - question_difficulty)
     
     def select_next_question(self, mode='adaptive', target_difficulty=None):
+        """
+        Select next question with SMOOTH progression
+        Prioritizes questions at current level, allows ±1 level
+        """
         available_questions = self.questions_df[
             ~self.questions_df['id'].isin(self.asked_questions)
         ].copy()
@@ -74,11 +95,27 @@ class AdaptiveQuizSystem:
             return None
         
         if mode == 'adaptive':
-            available_questions['score'] = abs(
-                available_questions['difficulty_numeric'] - self.user_ability
+            # Map ability to target difficulty level (round to nearest integer)
+            target_level = int(round(self.user_ability))
+            target_level = np.clip(target_level, 0, 3)
+            
+            # Prioritize questions at target level, but allow ±1 level
+            available_questions['difficulty_diff'] = abs(
+                available_questions['difficulty_numeric'] - target_level
             )
-            available_questions['score'] += np.random.normal(0, 0.1, len(available_questions))
+            
+            # Strong preference for exact match, moderate for ±1
+            # This prevents skipping difficulty levels
+            available_questions['score'] = available_questions['difficulty_diff'].apply(
+                lambda x: 0 if x == 0 else (1.0 if x == 1 else 5.0)
+            )
+            
+            # Add small randomness within priority groups
+            available_questions['score'] += np.random.uniform(0, 0.3, len(available_questions))
+            
+            # Select question with lowest score (highest priority)
             next_question = available_questions.nsmallest(1, 'score').iloc[0]
+            
         elif mode == 'fixed' and target_difficulty is not None:
             difficulty_questions = available_questions[
                 available_questions['difficulty_numeric'] == target_difficulty
@@ -288,9 +325,9 @@ class QuizModelPackage:
 print("Loading model...")
 with open('adaptive_quiz_model.pkl', 'rb') as f:
     model_package = pickle.load(f)
-print("✅ Model loaded successfully!")
+print("Model loaded successfully!")
 
-# Store active quiz sessions (in production, use Redis or database)
+# Store active quiz sessions
 active_sessions = {}
 
 # ============================================================================
@@ -324,14 +361,16 @@ def format_question(question_dict):
     """Format question for API response"""
     return {
         'id': int(question_dict['id']),
-        'question': question_dict['question_text'],
+        'question': str(question_dict['question_text']),
         'options': {
-            'a': question_dict['option_a'],
-            'b': question_dict['option_b'],
-            'c': question_dict['option_c'],
-            'd': question_dict['option_d']
+            'a': str(question_dict['option_a']),
+            'b': str(question_dict['option_b']),
+            'c': str(question_dict['option_c']),
+            'd': str(question_dict['option_d'])
         },
-        'difficulty': question_dict['difficulty']
+        'difficulty': str(question_dict['difficulty']),
+        'difficulty_numeric': int(question_dict['difficulty_numeric']),
+        'answer_numeric': int(question_dict['answer_numeric'])
     }
 
 # ============================================================================
@@ -340,34 +379,28 @@ def format_question(question_dict):
 
 @app.route('/api/adaptive/start', methods=['POST'])
 def start_adaptive_quiz():
-    """
-    Start a new adaptive quiz session
-    Body: { "user_id": "optional_user_id" }
-    """
+    """Start a new adaptive quiz session"""
     try:
         data = request.json or {}
         session_id = create_session_id()
         
-        # Create new adaptive quiz instance
         quiz = model_package.create_adaptive_quiz()
         
-        # Store session
         active_sessions[session_id] = {
             'type': 'adaptive',
             'quiz': quiz,
             'user_id': data.get('user_id'),
             'started_at': datetime.now().isoformat(),
-            'time_limit': 3600  # 1 hour in seconds
+            'time_limit': 3600
         }
         
-        # Get first question
         first_question = quiz.select_next_question(mode='adaptive')
         
         return jsonify({
             'success': True,
             'session_id': session_id,
             'question': format_question(first_question),
-            'user_ability': quiz.user_ability,
+            'user_ability': float(quiz.user_ability),
             'time_limit': 3600
         }), 200
         
@@ -379,21 +412,13 @@ def start_adaptive_quiz():
 
 @app.route('/api/adaptive/submit', methods=['POST'])
 def submit_adaptive_answer():
-    """
-    Submit answer for adaptive quiz
-    Body: {
-        "session_id": "session_id",
-        "question_id": 123,
-        "answer": "a"  # or 0 for numeric
-    }
-    """
+    """Submit answer for adaptive quiz"""
     try:
         data = request.json
         session_id = data.get('session_id')
         question_id = data.get('question_id')
         user_answer = data.get('answer')
         
-        # Validate session
         if session_id not in active_sessions:
             return jsonify({
                 'success': False,
@@ -403,12 +428,10 @@ def submit_adaptive_answer():
         session = active_sessions[session_id]
         quiz = session['quiz']
         
-        # Convert answer to numeric if it's a letter
         if isinstance(user_answer, str):
             answer_map = {'a': 0, 'b': 1, 'c': 2, 'd': 3}
             user_answer = answer_map.get(user_answer.lower(), 0)
         
-        # Get correct answer
         question = model_package.get_question_by_id(question_id)
         if question is None:
             return jsonify({
@@ -418,26 +441,26 @@ def submit_adaptive_answer():
         
         correct_answer = question['answer_numeric']
         
-        # Submit answer
         is_correct, new_ability = quiz.submit_answer(
             question_id, user_answer, correct_answer
         )
         
-        # Get next question
         next_question = quiz.select_next_question(mode='adaptive')
-        
-        # Get stats
         stats = quiz.get_stats()
         
         response = {
             'success': True,
-            'is_correct': is_correct,
-            'correct_answer': ['a', 'b', 'c', 'd'][correct_answer],
-            'user_ability': new_ability,
-            'stats': stats
+            'is_correct': bool(is_correct),
+            'correct_answer': ['a', 'b', 'c', 'd'][int(correct_answer)],
+            'user_ability': float(new_ability),
+            'stats': {
+                'total_questions': int(stats['total_questions']),
+                'correct_answers': int(stats['correct_answers']),
+                'accuracy': float(stats['accuracy']),
+                'current_ability': float(stats['current_ability'])
+            }
         }
         
-        # Add next question if available
         if next_question is not None:
             response['next_question'] = format_question(next_question)
         else:
@@ -465,9 +488,16 @@ def get_adaptive_stats(session_id):
         quiz = session['quiz']
         stats = quiz.get_stats()
         
+        serialized_stats = {
+            'total_questions': int(stats['total_questions']),
+            'correct_answers': int(stats['correct_answers']),
+            'accuracy': float(stats['accuracy']),
+            'current_ability': float(stats['current_ability'])
+        }
+        
         return jsonify({
             'success': True,
-            'stats': stats
+            'stats': serialized_stats
         }), 200
         
     except Exception as e:
@@ -482,21 +512,14 @@ def get_adaptive_stats(session_id):
 
 @app.route('/api/section/start', methods=['POST'])
 def start_section_quiz():
-    """
-    Start a new section-based quiz
-    Body: { "user_id": "optional_user_id" }
-    """
+    """Start a new section-based quiz"""
     try:
         data = request.json or {}
         session_id = create_session_id()
         
-        # Create new section quiz instance
         quiz = model_package.create_section_quiz()
-        
-        # Start first section
         questions = quiz.start_section(0)
         
-        # Store session
         active_sessions[session_id] = {
             'type': 'section',
             'quiz': quiz,
@@ -523,19 +546,12 @@ def start_section_quiz():
 
 @app.route('/api/section/submit', methods=['POST'])
 def submit_section_answer():
-    """
-    Submit answer for section-based quiz
-    Body: {
-        "session_id": "session_id",
-        "answer": "a"  # or 0 for numeric
-    }
-    """
+    """Submit answer for section-based quiz"""
     try:
         data = request.json
         session_id = data.get('session_id')
         user_answer = data.get('answer')
         
-        # Validate session
         if session_id not in active_sessions:
             return jsonify({
                 'success': False,
@@ -546,15 +562,11 @@ def submit_section_answer():
         quiz = session['quiz']
         current_index = session['current_question_index']
         
-        # Convert answer to numeric if it's a letter
         if isinstance(user_answer, str):
             answer_map = {'a': 0, 'b': 1, 'c': 2, 'd': 3}
             user_answer = answer_map.get(user_answer.lower(), 0)
         
-        # Submit answer
         is_correct = quiz.submit_section_answer(current_index, user_answer)
-        
-        # Check section completion
         is_complete, passed, needs_11th = quiz.check_section_completion()
         
         response = {
@@ -564,19 +576,16 @@ def submit_section_answer():
         }
         
         if needs_11th:
-            # Need 11th question
             question_11 = quiz.get_11th_question()
             response['needs_11th_question'] = True
             response['question_11'] = format_question(question_11)
             session['current_question_index'] += 1
             
         elif is_complete:
-            # Section complete
             response['section_complete'] = True
             response['section_passed'] = passed
             
             if passed:
-                # Move to next section
                 next_questions = quiz.proceed_to_next_section()
                 if next_questions is not None:
                     response['next_section'] = quiz.current_section
@@ -587,7 +596,6 @@ def submit_section_answer():
             else:
                 response['quiz_failed'] = True
         else:
-            # Continue with next question in section
             session['current_question_index'] += 1
             next_index = session['current_question_index']
             
@@ -596,7 +604,6 @@ def submit_section_answer():
                     quiz.section_questions[next_index]
                 )
         
-        # Add progress
         response['progress'] = quiz.get_progress()
         
         return jsonify(response), 200
@@ -638,10 +645,7 @@ def get_section_progress(session_id):
 
 @app.route('/api/questions/random', methods=['GET'])
 def get_random_questions():
-    """
-    Get random questions
-    Query params: ?n=10&difficulty=1
-    """
+    """Get random questions"""
     try:
         n = int(request.args.get('n', 10))
         difficulty = request.args.get('difficulty')
@@ -650,7 +654,6 @@ def get_random_questions():
             difficulty = int(difficulty)
         
         questions = model_package.get_random_questions(n=n, difficulty=difficulty)
-        
         formatted_questions = [format_question(q) for q in questions]
         
         return jsonify({
@@ -712,13 +715,11 @@ def end_session(session_id):
             session = active_sessions[session_id]
             quiz = session['quiz']
             
-            # Get final stats
             if session['type'] == 'adaptive':
                 final_stats = quiz.get_stats()
             else:
                 final_stats = quiz.get_progress()
             
-            # Remove session
             del active_sessions[session_id]
             
             return jsonify({
@@ -771,29 +772,4 @@ def internal_error(error):
 # ============================================================================
 
 if __name__ == '__main__':
-    print("\n" + "="*60)
-    print("🚀 Adaptive Quiz API Server")
-    print("="*60)
-    print(f"Model: {model_package.metadata['model_type']}")
-    print(f"Questions: {model_package.metadata['n_questions']}")
-    print(f"Accuracy: {model_package.metadata['test_accuracy']:.2%}")
-    print("="*60)
-    print("\n📡 Starting server on http://localhost:5000")
-    print("\n📚 API Endpoints:")
-    print("  Adaptive Quiz:")
-    print("    POST   /api/adaptive/start")
-    print("    POST   /api/adaptive/submit")
-    print("    GET    /api/adaptive/stats/<session_id>")
-    print("\n  Section Quiz:")
-    print("    POST   /api/section/start")
-    print("    POST   /api/section/submit")
-    print("    GET    /api/section/progress/<session_id>")
-    print("\n  General:")
-    print("    GET    /api/questions/random")
-    print("    GET    /api/question/<id>")
-    print("    GET    /api/model/info")
-    print("    DELETE /api/session/end/<session_id>")
-    print("    GET    /api/health")
-    print("="*60 + "\n")
-    
     app.run(debug=True, host='0.0.0.0', port=5000)
