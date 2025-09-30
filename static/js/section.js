@@ -1,5 +1,5 @@
 // Section-Based Quiz JavaScript
-const API_BASE = 'http://localhost:5000/api';
+const API_BASE = 'https://adaptive-exam-model.onrender.com/api';
 
 let sessionId = null;
 let currentQuestion = null;
