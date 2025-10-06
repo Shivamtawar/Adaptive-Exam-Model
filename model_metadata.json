@@ -1,58 +1,58 @@
 {
   "model_type": "RandomForest",
-  "n_questions": 80,
+  "n_questions": 75,
   "difficulty_levels": 4,
-  "trained_date": "2025-09-30 14:01:19",
-  "test_accuracy": 0.5,
+  "trained_date": "2025-10-06 19:28:08",
+  "test_accuracy": 0.6666666666666666,
   "feature_importance": [
     {
       "feature": "question_word_count",
-      "importance": 0.2666135642689348
+      "importance": 0.27818532936614676
     },
     {
       "feature": "question_length",
-      "importance": 0.24975091246662298
-    },
-    {
-      "feature": "option_b_numeric",
-      "importance": 0.088190443459979
+      "importance": 0.26613900018779724
     },
     {
       "feature": "option_a_numeric",
-      "importance": 0.07543175185436393
+      "importance": 0.08313629765712062
     },
     {
-      "feature": "option_c_numeric",
-      "importance": 0.0694389558642912
+      "feature": "option_b_numeric",
+      "importance": 0.06241774477775431
     },
     {
       "feature": "options_mean",
-      "importance": 0.06761810247003437
-    },
-    {
-      "feature": "options_std",
-      "importance": 0.04878206255566506
+      "importance": 0.05549067341276076
     },
     {
       "feature": "correct_option_value",
-      "importance": 0.043574466680345925
-    },
-    {
-      "feature": "option_d_numeric",
-      "importance": 0.03833590932244241
+      "importance": 0.04750453557363606
     },
     {
       "feature": "options_range",
-      "importance": 0.03796477782063933
+      "importance": 0.047073296553100184
+    },
+    {
+      "feature": "option_c_numeric",
+      "importance": 0.04636265562918304
+    },
+    {
+      "feature": "options_std",
+      "importance": 0.043096863505840244
+    },
+    {
+      "feature": "option_d_numeric",
+      "importance": 0.03690590841328353
     },
     {
       "feature": "answer_position",
-      "importance": 0.014299053236680964
+      "importance": 0.03368769492337717
     },
     {
       "feature": "tag_encoded",
       "importance": 0.0
     }
   ],
-  "version": "2.1_fixed_ability"
+  "version": "2.2_analytics_nan_filter"
 }

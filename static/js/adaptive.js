@@ -1,21 +1,20 @@
 // Adaptive Quiz JavaScript
-const API_BASE = 'https://adaptive-exam-model.onrender.com/api';
+const API_BASE = 'http://localhost:5000/api';
 
+let questionStartTime = null;
 let sessionId = null;
 let currentQuestion = null;
 let selectedAnswer = null;
 let questionCount = 0;
 let correctCount = 0;
 let timerInterval = null;
-let timeRemaining = 3600; // 1 hour
+let timeRemaining = 3600;
 
-// Initialize quiz on page load
 document.addEventListener('DOMContentLoaded', () => {
     startQuiz();
     startTimer();
 });
 
-// Start the quiz
 async function startQuiz() {
     try {
         const response = await fetch(`${API_BASE}/adaptive/start`, {
@@ -36,65 +35,55 @@ async function startQuiz() {
         }
     } catch (error) {
         console.error('Error:', error);
-        alert('Failed to start quiz. Make sure the Flask server is running.');
+        alert('Failed to start quiz.');
     }
+    questionStartTime = Date.now();
 }
 
-// Display question
 function displayQuestion(question) {
     questionCount++;
-    
     document.getElementById('questionNumber').textContent = `Question #${questionCount}`;
     document.getElementById('questionText').textContent = question.question;
     
-    // Set difficulty badge
     const badge = document.getElementById('difficultyBadge');
     badge.textContent = question.difficulty;
     badge.className = 'difficulty-badge ' + question.difficulty.toLowerCase().replace(' ', '-');
     
-    // Display options
     const optionsGrid = document.getElementById('optionsGrid');
     optionsGrid.innerHTML = '';
     
     const letters = ['a', 'b', 'c', 'd'];
-    letters.forEach((letter, index) => {
+    letters.forEach((letter) => {
         const optionBtn = document.createElement('div');
         optionBtn.className = 'option-btn';
         optionBtn.onclick = () => selectOption(letter, optionBtn);
-        
         optionBtn.innerHTML = `
             <div class="option-letter">${letter.toUpperCase()}</div>
             <div class="option-text">${question.options[letter]}</div>
         `;
-        
         optionsGrid.appendChild(optionBtn);
     });
     
-    // Reset selection
     selectedAnswer = null;
     document.getElementById('submitBtn').disabled = true;
-    
-    // Update stats
     document.getElementById('questionCount').textContent = questionCount;
+    document.getElementById('correctCount').textContent = correctCount;
+    const accuracy = questionCount > 0 ? (correctCount / questionCount * 100) : 0;
+    document.getElementById('accuracy').textContent = accuracy.toFixed(0) + '%';
+    questionStartTime = Date.now();
 }
 
-// Select option
 function selectOption(letter, element) {
-    // Remove previous selection
-    document.querySelectorAll('.option-btn').forEach(btn => {
-        btn.classList.remove('selected');
-    });
-    
-    // Add selection
+    document.querySelectorAll('.option-btn').forEach(btn => btn.classList.remove('selected'));
     element.classList.add('selected');
     selectedAnswer = letter;
     document.getElementById('submitBtn').disabled = false;
 }
 
-// Submit answer
 async function submitAnswer() {
     if (!selectedAnswer) return;
     
+    const timeSpent = (Date.now() - questionStartTime) / 1000;
     document.getElementById('submitBtn').disabled = true;
     
     try {
@@ -104,34 +93,28 @@ async function submitAnswer() {
             body: JSON.stringify({
                 session_id: sessionId,
                 question_id: currentQuestion.id,
-                answer: selectedAnswer
+                answer: selectedAnswer,
+                time_spent: timeSpent
             })
         });
         
         const data = await response.json();
         
         if (data.success) {
-            // Update correct count
-            if (data.is_correct) {
-                correctCount++;
-            }
-            
-            // Update stats
-            updateStats(data.stats);
+            if (data.is_correct) correctCount++;
+            document.getElementById('correctCount').textContent = correctCount;
+            const accuracy = questionCount > 0 ? (correctCount / questionCount * 100) : 0;
+            document.getElementById('accuracy').textContent = accuracy.toFixed(0) + '%';
             updateAbility(data.user_ability);
-            
-            // Show feedback
             showFeedback(data.is_correct, data.correct_answer);
             
-            // Store next question
             if (data.next_question) {
                 currentQuestion = data.next_question;
             } else {
-                // Quiz complete
                 currentQuestion = null;
+                sessionStorage.setItem('lastSessionId', sessionId);
+                sessionStorage.setItem('lastQuizType', 'adaptive');
             }
-        } else {
-            alert('Error submitting answer: ' + data.error);
         }
     } catch (error) {
         console.error('Error:', error);
@@ -139,7 +122,6 @@ async function submitAnswer() {
     }
 }
 
-// Show feedback modal
 function showFeedback(isCorrect, correctAnswer) {
     const modal = document.getElementById('feedbackModal');
     const icon = document.getElementById('feedbackIcon');
@@ -148,14 +130,10 @@ function showFeedback(isCorrect, correctAnswer) {
     
     icon.className = 'feedback-icon ' + (isCorrect ? 'correct' : 'wrong');
     title.textContent = isCorrect ? 'Correct! 🎉' : 'Incorrect';
-    message.textContent = isCorrect 
-        ? 'Great job! Moving to the next question...' 
-        : `The correct answer was: ${correctAnswer.toUpperCase()}`;
-    
+    message.textContent = isCorrect ? 'Great job!' : `Correct answer: ${correctAnswer.toUpperCase()}`;
     modal.classList.add('show');
 }
 
-// Next question
 function nextQuestion() {
     const modal = document.getElementById('feedbackModal');
     modal.classList.remove('show');
@@ -167,73 +145,51 @@ function nextQuestion() {
     }
 }
 
-// Update stats
-function updateStats(stats) {
-    document.getElementById('questionCount').textContent = stats.total_questions;
-    document.getElementById('correctCount').textContent = stats.correct_answers;
-    document.getElementById('accuracy').textContent = (stats.accuracy * 100).toFixed(0) + '%';
-}
-
-// Update ability meter
 function updateAbility(ability) {
     const fill = document.getElementById('abilityFill');
     const value = document.getElementById('abilityValue');
-    
-    // Map ability (-3 to 3) to percentage (0 to 100)
     const percentage = ((ability + 3) / 6) * 100;
     fill.style.width = percentage + '%';
     value.textContent = ability.toFixed(2);
 }
 
-// Timer
 function startTimer() {
     timerInterval = setInterval(() => {
         timeRemaining--;
-        
         const minutes = Math.floor(timeRemaining / 60);
         const seconds = timeRemaining % 60;
-        
-        document.getElementById('timer').textContent = 
-            `${minutes}:${seconds.toString().padStart(2, '0')}`;
-        
+        document.getElementById('timer').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
         if (timeRemaining <= 0) {
             clearInterval(timerInterval);
-            showResults();
+            endExam();
         }
     }, 1000);
 }
 
-// Show final results
-async function showResults() {
+async function endExam() {
+    if (!confirm('Are you sure you want to end the exam?')) return;
     clearInterval(timerInterval);
-    
-    try {
-        const response = await fetch(`${API_BASE}/adaptive/stats/${sessionId}`);
-        const data = await response.json();
-        
-        if (data.success) {
-            const stats = data.stats;
-            
-            document.getElementById('totalQuestions').textContent = stats.total_questions;
-            document.getElementById('totalCorrect').textContent = stats.correct_answers;
-            document.getElementById('finalAccuracy').textContent = (stats.accuracy * 100).toFixed(1) + '%';
-            document.getElementById('finalAbility').textContent = stats.current_ability.toFixed(2);
-            
-            document.getElementById('resultsModal').classList.add('show');
-        }
-    } catch (error) {
-        console.error('Error:', error);
+    if (sessionId) {
+        sessionStorage.setItem('lastSessionId', sessionId);
+        sessionStorage.setItem('lastQuizType', 'adaptive');
+        setTimeout(() => showResults(), 500);
     }
 }
 
-// Keyboard shortcuts
+function showResults() {
+    if (!sessionId) {
+        alert('No session ID found.');
+        return;
+    }
+    clearInterval(timerInterval);
+    window.location.href = `/analytics?session=${sessionId}&type=adaptive`;
+}
+
 document.addEventListener('keydown', (e) => {
     if (e.key >= '1' && e.key <= '4') {
         const options = document.querySelectorAll('.option-btn');
         const index = parseInt(e.key) - 1;
-        if (options[index]) {
-            options[index].click();
-        }
+        if (options[index]) options[index].click();
     } else if (e.key === 'Enter' && !document.getElementById('submitBtn').disabled) {
         submitAnswer();
     }

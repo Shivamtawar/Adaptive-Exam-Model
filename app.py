@@ -1,12 +1,11 @@
 """
-Flask API for Adaptive Quiz System (FIXED ABILITY PROGRESSION)
+Flask API for Adaptive Quiz System (WITH ANALYTICS - FIXED)
 Save as: app.py
 
-Features:
-- Adaptive quiz with proper ability progression
-- Section-based quiz with reload on failure
-- Restart section when questions exhausted
-- 11th question logic when 5 correct + last wrong
+Fixes:
+- Properly converts NumPy types to native Python types
+- Ensures all analytics data is JSON serializable
+- Handles empty/NaN values gracefully
 """
 
 from flask import Flask, request, jsonify, render_template
@@ -17,69 +16,76 @@ from datetime import datetime
 import pandas as pd
 import numpy as np
 from scipy.special import expit
-from scipy.optimize import minimize
 import json
 import dill
 import sys
 import types
 
-# Custom JSON encoder to handle numpy types
+# Custom JSON encoder for NumPy types
 class NumpyEncoder(json.JSONEncoder):
     def default(self, obj):
-        if isinstance(obj, np.integer):
+        if isinstance(obj, (np.integer, np.int64, np.int32)):
             return int(obj)
-        elif isinstance(obj, np.floating):
+        elif isinstance(obj, (np.floating, np.float64, np.float32)):
             return float(obj)
         elif isinstance(obj, np.ndarray):
             return obj.tolist()
+        elif pd.isna(obj):
+            return None
         return super(NumpyEncoder, self).default(obj)
 
 app = Flask(__name__)
 app.json_encoder = NumpyEncoder
 CORS(app)
 
+# Helper function to convert data to JSON-safe format
+def make_json_safe(obj):
+    """Recursively convert NumPy types to native Python types"""
+    if isinstance(obj, dict):
+        return {k: make_json_safe(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [make_json_safe(item) for item in obj]
+    elif isinstance(obj, (np.integer, np.int64, np.int32)):
+        return int(obj)
+    elif isinstance(obj, (np.floating, np.float64, np.float32)):
+        if np.isnan(obj) or np.isinf(obj):
+            return 0
+        return float(obj)
+    elif isinstance(obj, np.ndarray):
+        return obj.tolist()
+    elif pd.isna(obj):
+        return None
+    return obj
+
 # ============================================================================
-# DEFINE CLASSES BEFORE LOADING MODEL (CRITICAL!)
+# DEFINE CLASSES
 # ============================================================================
 
 class AdaptiveQuizSystem:
-    """Adaptive Quiz System with FIXED ability progression"""
-    
     def __init__(self, questions_df, difficulty_model):
         self.questions_df = questions_df.copy()
         self.difficulty_model = difficulty_model
-        self.user_ability = 0.5  # Start at Easy level
+        self.user_ability = 0.5
         self.response_history = []
         self.asked_questions = set()
+        self.start_time = datetime.now()
+        self.question_times = []
         
     def estimate_ability(self, responses):
-        """
-        FIXED: Estimate user ability with proper progression
-        - Correct answer → ability increases
-        - Wrong answer → ability decreases
-        """
         if not responses:
-            return 0.5  # Start at Easy level
-        
+            return 0.5
         ability = 0.5
         learning_rate = 0.2
-        
         for i, (difficulty, correct) in enumerate(responses):
             if correct:
                 target = ability + 0.4
             else:
                 target = ability - 0.4
-            
             ability = ability + learning_rate * (target - ability)
             learning_rate = min(0.3, learning_rate + 0.01)
-        
         return np.clip(ability, 0.0, 3.0)
     
-    def get_question_probability(self, question_difficulty, user_ability):
-        return expit(user_ability - question_difficulty)
-    
     def select_next_question(self, mode='adaptive', target_difficulty=None):
-        """Select next question with SMOOTH progression"""
         available_questions = self.questions_df[
             ~self.questions_df['id'].isin(self.asked_questions)
         ].copy()
@@ -90,74 +96,96 @@ class AdaptiveQuizSystem:
         if mode == 'adaptive':
             target_level = int(round(self.user_ability))
             target_level = np.clip(target_level, 0, 3)
-            
             available_questions['difficulty_diff'] = abs(
                 available_questions['difficulty_numeric'] - target_level
             )
-            
             available_questions['score'] = available_questions['difficulty_diff'].apply(
                 lambda x: 0 if x == 0 else (1.0 if x == 1 else 5.0)
             )
-            
             available_questions['score'] += np.random.uniform(0, 0.3, len(available_questions))
             next_question = available_questions.nsmallest(1, 'score').iloc[0]
-            
-        elif mode == 'fixed' and target_difficulty is not None:
-            difficulty_questions = available_questions[
-                available_questions['difficulty_numeric'] == target_difficulty
-            ]
-            if len(difficulty_questions) == 0:
-                next_question = available_questions.sample(1).iloc[0]
-            else:
-                next_question = difficulty_questions.sample(1).iloc[0]
         else:
             next_question = available_questions.sample(1).iloc[0]
         
         return next_question
     
-    def submit_answer(self, question_id, user_answer, correct_answer):
+    def submit_answer(self, question_id, user_answer, correct_answer, time_spent):
         is_correct = (user_answer == correct_answer)
         question = self.questions_df[self.questions_df['id'] == question_id].iloc[0]
-        difficulty = question['difficulty_numeric']
+        difficulty = int(question['difficulty_numeric'])
         
         self.response_history.append({
-            'question_id': question_id,
-            'difficulty': difficulty,
-            'correct': is_correct,
-            'user_answer': user_answer,
-            'correct_answer': correct_answer
+            'question_id': int(question_id),
+            'difficulty': int(difficulty),
+            'correct': bool(is_correct),
+            'user_answer': int(user_answer),
+            'correct_answer': int(correct_answer),
+            'time_spent': float(time_spent),
+            'timestamp': datetime.now().isoformat()
         })
         
+        self.question_times.append(float(time_spent))
         self.asked_questions.add(question_id)
+        
         responses = [(r['difficulty'], r['correct']) for r in self.response_history]
         self.user_ability = self.estimate_ability(responses)
         
         return is_correct, self.user_ability
     
-    def get_stats(self):
+    def get_analytics(self):
         if not self.response_history:
             return {
                 'total_questions': 0,
                 'correct_answers': 0,
+                'wrong_answers': 0,
                 'accuracy': 0.0,
-                'current_ability': self.user_ability
+                'total_time_seconds': 0,
+                'average_time_per_question': 0.0,
+                'fastest_answer': 0.0,
+                'slowest_answer': 0.0,
+                'current_ability': float(self.user_ability),
+                'difficulty_breakdown': {},
+                'response_history': [],
+                'start_time': self.start_time.isoformat(),
+                'end_time': datetime.now().isoformat()
             }
         
         total = len(self.response_history)
         correct = sum(1 for r in self.response_history if r['correct'])
+        total_time = sum(self.question_times)
+        avg_time = total_time / total if total > 0 else 0
+        
+        difficulty_breakdown = {0: [], 1: [], 2: [], 3: []}
+        for r in self.response_history:
+            difficulty_breakdown[r['difficulty']].append(r['correct'])
+        
+        difficulty_stats = {}
+        for diff, results in difficulty_breakdown.items():
+            if results:
+                difficulty_stats[str(diff)] = {
+                    'attempted': int(len(results)),
+                    'correct': int(sum(results)),
+                    'accuracy': float(sum(results) / len(results))
+                }
         
         return {
-            'total_questions': total,
-            'correct_answers': correct,
-            'accuracy': correct / total if total > 0 else 0.0,
-            'current_ability': self.user_ability,
-            'response_history': self.response_history
+            'total_questions': int(total),
+            'correct_answers': int(correct),
+            'wrong_answers': int(total - correct),
+            'accuracy': float(correct / total if total > 0 else 0.0),
+            'total_time_seconds': int(total_time),
+            'average_time_per_question': float(round(avg_time, 2)),
+            'fastest_answer': float(min(self.question_times)),
+            'slowest_answer': float(max(self.question_times)),
+            'current_ability': float(self.user_ability),
+            'difficulty_breakdown': difficulty_stats,
+            'response_history': self.response_history,
+            'start_time': self.start_time.isoformat(),
+            'end_time': datetime.now().isoformat()
         }
 
 
 class SectionBasedQuizSystem:
-    """Section-based quiz with progression rules and reload functionality"""
-    
     def __init__(self, questions_df):
         self.questions_df = questions_df.copy()
         self.sections = {
@@ -169,17 +197,18 @@ class SectionBasedQuizSystem:
         self.current_section = 0
         self.section_questions = []
         self.section_answers = []
+        self.all_answers = []  # Track ALL answers across sections
         self.asked_question_ids = set()
         self.completed_sections = []
         self.section_exhausted = False
+        self.start_time = datetime.now()
+        self.question_times = []
         
     def start_section(self, section_num, reset_section=False):
-        """Start or restart a section"""
         if section_num >= len(self.sections):
             return None
         
         self.current_section = section_num
-        
         if reset_section:
             self.section_questions = []
             self.section_answers = []
@@ -207,7 +236,6 @@ class SectionBasedQuizSystem:
         return self.section_questions
     
     def reload_section_questions(self):
-        """Load another batch of 10 unique questions from same section after failing"""
         section_difficulty = self.sections[self.current_section]['difficulty']
         available = self.questions_df[
             (self.questions_df['difficulty_numeric'] == section_difficulty) &
@@ -231,56 +259,49 @@ class SectionBasedQuizSystem:
         
         return self.section_questions
     
-    def submit_section_answer(self, question_index, user_answer):
-        """Submit answer for current section question"""
+    def submit_section_answer(self, question_index, user_answer, time_spent):
         if question_index >= len(self.section_questions):
             return None
         
         question = self.section_questions[question_index]
-        correct_answer = question['answer_numeric']
+        correct_answer = int(question['answer_numeric'])
         is_correct = (user_answer == correct_answer)
         
-        self.section_answers.append({
-            'question_index': question_index,
-            'question_id': question['id'],
-            'user_answer': user_answer,
-            'correct_answer': correct_answer,
-            'is_correct': is_correct
-        })
+        answer_record = {
+            'question_index': int(question_index),
+            'question_id': int(question['id']),
+            'user_answer': int(user_answer),
+            'correct_answer': int(correct_answer),
+            'is_correct': bool(is_correct),
+            'time_spent': float(time_spent),
+            'difficulty': int(question['difficulty_numeric']),
+            'section': int(self.current_section),
+            'timestamp': datetime.now().isoformat()
+        }
+        
+        self.section_answers.append(answer_record)
+        self.all_answers.append(answer_record)
+        self.question_times.append(float(time_spent))
         
         return is_correct
     
     def check_section_completion(self):
-        """
-        Check section completion status
-        Returns: (is_complete, passed, needs_11th_question)
-        """
         total_answered = len(self.section_answers)
-        
-        # Need at least 10 answers to check completion
         if total_answered < 10:
             return False, False, False
         
         correct_count = sum(1 for a in self.section_answers if a['is_correct'])
         threshold = self.sections[self.current_section]['threshold']
-        
-        # Check if last answer was wrong
         last_wrong = not self.section_answers[-1]['is_correct']
         
-        # Passed: 6 or more correct
         if correct_count >= threshold:
             return True, True, False
-        
-        # Special case: 5 correct and last question wrong -> give 11th question
         elif correct_count == threshold - 1 and last_wrong and total_answered == 10:
             return False, False, True
-        
-        # Failed: Less than 6 correct after 10 questions
         else:
             return True, False, False
     
     def get_11th_question(self):
-        """Get unique 11th question from same difficulty"""
         section_difficulty = self.sections[self.current_section]['difficulty']
         available = self.questions_df[
             (self.questions_df['difficulty_numeric'] == section_difficulty) &
@@ -297,41 +318,64 @@ class SectionBasedQuizSystem:
         return question
     
     def proceed_to_next_section(self):
-        """Move to next section after passing current one"""
         self.completed_sections.append({
-            'section': self.current_section,
-            'correct': sum(1 for a in self.section_answers if a['is_correct']),
-            'total': len(self.section_answers),
-            'passed': sum(1 for a in self.section_answers if a['is_correct']) >= 6
+            'section': int(self.current_section),
+            'section_name': self.sections[self.current_section]['name'],
+            'correct': int(sum(1 for a in self.section_answers if a['is_correct'])),
+            'total': int(len(self.section_answers)),
+            'passed': bool(sum(1 for a in self.section_answers if a['is_correct']) >= 6)
         })
         
         self.current_section += 1
+        self.section_answers = []  # Reset for new section
         
         if self.current_section >= len(self.sections):
             return None
         
         return self.start_section(self.current_section)
     
-    def get_progress(self):
-        """Get overall progress with detailed information"""
-        correct_in_section = sum(1 for a in self.section_answers if a['is_correct'])
-        total_in_section = len(self.section_answers)
+    def get_analytics(self):
+        if not self.all_answers:
+            return {
+                'total_questions': 0,
+                'correct_answers': 0,
+                'wrong_answers': 0,
+                'accuracy': 0.0,
+                'total_time_seconds': 0,
+                'average_time_per_question': 0.0,
+                'fastest_answer': 0.0,
+                'slowest_answer': 0.0,
+                'sections_completed': 0,
+                'sections_passed': 0,
+                'section_breakdown': [],
+                'response_history': [],
+                'start_time': self.start_time.isoformat(),
+                'end_time': datetime.now().isoformat()
+            }
+        
+        total_questions = len(self.all_answers)
+        total_correct = sum(1 for a in self.all_answers if a['is_correct'])
+        total_time = sum(self.question_times)
         
         return {
-            'current_section': self.current_section,
-            'section_name': self.sections[self.current_section]['name'],
-            'questions_answered': total_in_section,
-            'correct_in_section': correct_in_section,
-            'completed_sections': self.completed_sections,
-            'section_exhausted': self.section_exhausted,
-            'threshold': self.sections[self.current_section]['threshold'],
-            'total_questions_in_batch': len(self.section_questions)
+            'total_questions': int(total_questions),
+            'correct_answers': int(total_correct),
+            'wrong_answers': int(total_questions - total_correct),
+            'accuracy': float(total_correct / total_questions if total_questions > 0 else 0.0),
+            'total_time_seconds': int(total_time),
+            'average_time_per_question': float(round(total_time / total_questions, 2) if total_questions > 0 else 0),
+            'fastest_answer': float(min(self.question_times)) if self.question_times else 0.0,
+            'slowest_answer': float(max(self.question_times)) if self.question_times else 0.0,
+            'sections_completed': int(len(self.completed_sections)),
+            'sections_passed': int(sum(1 for s in self.completed_sections if s['passed'])),
+            'section_breakdown': self.completed_sections,
+            'response_history': self.all_answers,
+            'start_time': self.start_time.isoformat(),
+            'end_time': datetime.now().isoformat()
         }
 
 
 class QuizModelPackage:
-    """Complete package for Flask API"""
-    
     def __init__(self, difficulty_model, questions_df, feature_cols, scaler=None):
         self.difficulty_model = difficulty_model
         self.questions_df = questions_df
@@ -350,77 +394,47 @@ class QuizModelPackage:
         if len(question) == 0:
             return None
         return question.iloc[0].to_dict()
-    
-    def get_random_questions(self, n=10, difficulty=None):
-        if difficulty is not None:
-            filtered = self.questions_df[
-                self.questions_df['difficulty_numeric'] == difficulty
-            ]
-        else:
-            filtered = self.questions_df
-        
-        if len(filtered) < n:
-            return filtered.to_dict('records')
-        
-        return filtered.sample(n).to_dict('records')
 
 
-# ============================================================================
-# REGISTER CLASSES WITH DILL (FIX FOR GUNICORN)
-# ============================================================================
-
-# Create a temporary module to hold the classes
+# Register classes
 temp_module = types.ModuleType('quiz_model_package')
 temp_module.QuizModelPackage = QuizModelPackage
 temp_module.AdaptiveQuizSystem = AdaptiveQuizSystem
 temp_module.SectionBasedQuizSystem = SectionBasedQuizSystem
 sys.modules['quiz_model_package'] = temp_module
 
-# Also register in __main__ for backwards compatibility
-current_module = sys.modules.get('__main__')
-if current_module:
-    current_module.QuizModelPackage = QuizModelPackage
-    current_module.AdaptiveQuizSystem = AdaptiveQuizSystem
-    current_module.SectionBasedQuizSystem = SectionBasedQuizSystem
-
-# Load the model
+# Load model
 print("Loading model...")
 with open("adaptive_quiz_model.pkl", "rb") as f:
     model_package = dill.load(f)
 print("Model loaded!")
 
-# Store active quiz sessions
 active_sessions = {}
 
 # ============================================================================
-# FRONTEND ROUTES
+# ROUTES
 # ============================================================================
 
 @app.route('/')
 def home():
-    """Serve the main quiz interface"""
     return render_template('index.html')
 
 @app.route('/adaptive')
 def adaptive_page():
-    """Adaptive quiz page"""
     return render_template('adaptive.html')
 
 @app.route('/section')
 def section_page():
-    """Section-based quiz page"""
     return render_template('section.html')
 
-# ============================================================================
-# UTILITY FUNCTIONS
-# ============================================================================
+@app.route('/analytics')
+def analytics_page():
+    return render_template('analytics.html')
 
 def create_session_id():
-    """Generate unique session ID"""
     return str(uuid.uuid4())
 
 def format_question(question_dict):
-    """Format question for API response"""
     return {
         'id': int(question_dict['id']),
         'question': str(question_dict['question_text']),
@@ -441,7 +455,6 @@ def format_question(question_dict):
 
 @app.route('/api/adaptive/start', methods=['POST'])
 def start_adaptive_quiz():
-    """Start a new adaptive quiz session"""
     try:
         data = request.json or {}
         session_id = create_session_id()
@@ -452,8 +465,7 @@ def start_adaptive_quiz():
             'type': 'adaptive',
             'quiz': quiz,
             'user_id': data.get('user_id'),
-            'started_at': datetime.now().isoformat(),
-            'time_limit': 3600
+            'started_at': datetime.now().isoformat()
         }
         
         first_question = quiz.select_next_question(mode='adaptive')
@@ -462,30 +474,24 @@ def start_adaptive_quiz():
             'success': True,
             'session_id': session_id,
             'question': format_question(first_question),
-            'user_ability': float(quiz.user_ability),
-            'time_limit': 3600
+            'user_ability': float(quiz.user_ability)
         }), 200
         
     except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        print(f"Error in start_adaptive_quiz: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/api/adaptive/submit', methods=['POST'])
 def submit_adaptive_answer():
-    """Submit answer for adaptive quiz"""
     try:
         data = request.json
         session_id = data.get('session_id')
         question_id = data.get('question_id')
         user_answer = data.get('answer')
+        time_spent = data.get('time_spent', 0)
         
         if session_id not in active_sessions:
-            return jsonify({
-                'success': False,
-                'error': 'Invalid session ID'
-            }), 404
+            return jsonify({'success': False, 'error': 'Invalid session ID'}), 404
         
         session = active_sessions[session_id]
         quiz = session['quiz']
@@ -496,31 +502,21 @@ def submit_adaptive_answer():
         
         question = model_package.get_question_by_id(question_id)
         if question is None:
-            return jsonify({
-                'success': False,
-                'error': 'Question not found'
-            }), 404
+            return jsonify({'success': False, 'error': 'Question not found'}), 404
         
-        correct_answer = question['answer_numeric']
+        correct_answer = int(question['answer_numeric'])
         
         is_correct, new_ability = quiz.submit_answer(
-            question_id, user_answer, correct_answer
+            question_id, user_answer, correct_answer, time_spent
         )
         
         next_question = quiz.select_next_question(mode='adaptive')
-        stats = quiz.get_stats()
         
         response = {
             'success': True,
             'is_correct': bool(is_correct),
             'correct_answer': ['a', 'b', 'c', 'd'][int(correct_answer)],
-            'user_ability': float(new_ability),
-            'stats': {
-                'total_questions': int(stats['total_questions']),
-                'correct_answers': int(stats['correct_answers']),
-                'accuracy': float(stats['accuracy']),
-                'current_ability': float(stats['current_ability'])
-            }
+            'user_ability': float(new_ability)
         }
         
         if next_question is not None:
@@ -531,50 +527,50 @@ def submit_adaptive_answer():
         return jsonify(response), 200
         
     except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        print(f"Error in submit_adaptive_answer: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
 
-@app.route('/api/adaptive/stats/<session_id>', methods=['GET'])
-def get_adaptive_stats(session_id):
-    """Get current quiz statistics"""
+@app.route('/api/adaptive/analytics/<session_id>', methods=['GET'])
+def get_adaptive_analytics(session_id):
     try:
+        print(f"\n=== Analytics Request for Session: {session_id} ===")
+        
         if session_id not in active_sessions:
-            return jsonify({
-                'success': False,
-                'error': 'Invalid session ID'
-            }), 404
+            print(f"Session not found in active_sessions")
+            return jsonify({'success': False, 'error': 'Invalid session ID'}), 404
         
         session = active_sessions[session_id]
         quiz = session['quiz']
-        stats = quiz.get_stats()
         
-        serialized_stats = {
-            'total_questions': int(stats['total_questions']),
-            'correct_answers': int(stats['correct_answers']),
-            'accuracy': float(stats['accuracy']),
-            'current_ability': float(stats['current_ability'])
-        }
+        print(f"Quiz type: {session['type']}")
+        print(f"Response history length: {len(quiz.response_history)}")
+        
+        analytics = quiz.get_analytics()
+        
+        # Convert to JSON-safe format
+        analytics = make_json_safe(analytics)
+        
+        print(f"Analytics generated successfully")
+        print(f"Total questions: {analytics.get('total_questions')}")
         
         return jsonify({
             'success': True,
-            'stats': serialized_stats
+            'analytics': analytics,
+            'quiz_type': 'adaptive'
         }), 200
         
     except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        print(f"Error in get_adaptive_analytics: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 # ============================================================================
-# SECTION-BASED QUIZ ENDPOINTS
+# SECTION QUIZ ENDPOINTS
 # ============================================================================
 
 @app.route('/api/section/start', methods=['POST'])
 def start_section_quiz():
-    """Start a new section-based quiz"""
     try:
         data = request.json or {}
         session_id = create_session_id()
@@ -601,24 +597,19 @@ def start_section_quiz():
         }), 200
         
     except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        print(f"Error in start_section_quiz: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/api/section/submit', methods=['POST'])
 def submit_section_answer():
-    """Submit answer for section-based quiz"""
     try:
         data = request.json
         session_id = data.get('session_id')
         user_answer = data.get('answer')
+        time_spent = data.get('time_spent', 0)
         
         if session_id not in active_sessions:
-            return jsonify({
-                'success': False,
-                'error': 'Invalid session ID'
-            }), 404
+            return jsonify({'success': False, 'error': 'Invalid session ID'}), 404
         
         session = active_sessions[session_id]
         quiz = session['quiz']
@@ -628,21 +619,10 @@ def submit_section_answer():
             answer_map = {'a': 0, 'b': 1, 'c': 2, 'd': 3}
             user_answer = answer_map.get(user_answer.lower(), 0)
         
-        # Submit the answer
-        is_correct = quiz.submit_section_answer(current_index, user_answer)
+        is_correct = quiz.submit_section_answer(current_index, user_answer, time_spent)
         
-        # Get current stats
         correct_count = sum(1 for a in quiz.section_answers if a['is_correct'])
         total_answered = len(quiz.section_answers)
-        
-        # Debug info
-        print(f"\n=== Section Answer Debug ===")
-        print(f"Section: {quiz.current_section} ({quiz.sections[quiz.current_section]['name']})")
-        print(f"Question Index: {current_index}")
-        print(f"Total Answered: {total_answered}")
-        print(f"Correct Count: {correct_count}")
-        print(f"Threshold: {quiz.sections[quiz.current_section]['threshold']}")
-        print(f"Is Correct: {is_correct}")
         
         response = {
             'success': True,
@@ -650,318 +630,116 @@ def submit_section_answer():
             'question_index': current_index,
             'correct_count': correct_count,
             'total_answered': total_answered,
-            'threshold': quiz.sections[quiz.current_section]['threshold']
+            'threshold': quiz.sections[quiz.current_section]['threshold'],
+            'progress': {
+                'correct_in_section': correct_count,
+                'questions_answered': total_answered
+            }
         }
         
-        # Check if we've answered 10 questions
         if total_answered >= 10:
             is_complete, passed, needs_11th = quiz.check_section_completion()
             
-            print(f"Check Completion: complete={is_complete}, passed={passed}, needs_11th={needs_11th}")
-            
             if needs_11th:
-                # User has 5 correct and last question was wrong - give 11th question
                 question_11 = quiz.get_11th_question()
                 if question_11 is not None:
                     response['needs_11th_question'] = True
                     response['question_11'] = format_question(question_11)
-                    response['message'] = 'You need one more correct answer! Here is your 11th question.'
                     session['current_question_index'] += 1
-                    print("Giving 11th question")
                 else:
                     response['section_exhausted'] = True
-                    response['message'] = 'No more questions available in this section. Please restart the test.'
-                    print("No 11th question available - section exhausted")
                 
             elif is_complete:
                 response['section_complete'] = True
                 response['section_passed'] = passed
                 
-                print(f"Section complete! Passed: {passed}")
-                
                 if passed:
-                    # User passed - move to next section
                     next_questions = quiz.proceed_to_next_section()
                     if next_questions is not None:
                         response['next_section'] = quiz.current_section
-                        response['next_section_name'] = quiz.sections[quiz.current_section]['name']
+                        response['section_name'] = quiz.sections[quiz.current_section]['name']
                         response['next_question'] = format_question(next_questions[0])
-                        response['message'] = f'Congratulations! Moving to {quiz.sections[quiz.current_section]["name"]} section.'
                         session['current_question_index'] = 0
-                        print(f"Moving to section {quiz.current_section}")
                     else:
                         response['quiz_complete'] = True
-                        response['message'] = 'Congratulations! You have completed all sections!'
-                        print("Quiz complete!")
                 else:
-                    # User failed - reload same section with new questions
-                    print(f"Section failed. Reloading section {quiz.current_section}")
                     new_questions = quiz.reload_section_questions()
                     if new_questions is not None:
                         response['section_failed'] = True
                         response['reload_section'] = True
-                        response['message'] = f'You need at least 6 correct answers to proceed. Try again with new questions from {quiz.sections[quiz.current_section]["name"]} section.'
                         response['next_question'] = format_question(new_questions[0])
                         session['current_question_index'] = 0
-                        print(f"Loaded {len(new_questions)} new questions")
                     else:
                         response['section_exhausted'] = True
-                        response['message'] = 'No more questions available in this section. Please restart the test.'
-                        print("Section exhausted - no more questions")
+                        response['quiz_failed'] = True
         else:
-            # Continue to next question in current batch
             session['current_question_index'] += 1
             next_index = session['current_question_index']
             
             if next_index < len(quiz.section_questions):
-                response['next_question'] = format_question(
-                    quiz.section_questions[next_index]
-                )
-            else:
-                response['error'] = 'Unexpected state: no next question available'
-        
-        response['progress'] = quiz.get_progress()
+                response['next_question'] = format_question(quiz.section_questions[next_index])
         
         return jsonify(response), 200
         
     except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        print(f"Error in submit_section_answer: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
 
-@app.route('/api/section/progress/<session_id>', methods=['GET'])
-def get_section_progress(session_id):
-    """Get section quiz progress"""
+@app.route('/api/section/analytics/<session_id>', methods=['GET'])
+def get_section_analytics(session_id):
     try:
+        print(f"\n=== Section Analytics Request for Session: {session_id} ===")
+        
         if session_id not in active_sessions:
-            return jsonify({
-                'success': False,
-                'error': 'Invalid session ID'
-            }), 404
+            print(f"Session not found")
+            return jsonify({'success': False, 'error': 'Invalid session ID'}), 404
         
         session = active_sessions[session_id]
         quiz = session['quiz']
-        progress = quiz.get_progress()
+        
+        print(f"All answers length: {len(quiz.all_answers)}")
+        print(f"Completed sections: {len(quiz.completed_sections)}")
+        
+        analytics = quiz.get_analytics()
+        
+        # Convert to JSON-safe format
+        analytics = make_json_safe(analytics)
+        
+        print(f"Analytics generated successfully")
+        print(f"Total questions: {analytics.get('total_questions')}")
         
         return jsonify({
             'success': True,
-            'progress': progress
+            'analytics': analytics,
+            'quiz_type': 'section'
         }), 200
         
     except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
-
-@app.route('/api/section/restart', methods=['POST'])
-def restart_section():
-    """Restart the current section by clearing asked questions for that section"""
-    try:
-        data = request.json
-        session_id = data.get('session_id')
-        
-        if session_id not in active_sessions:
-            return jsonify({
-                'success': False,
-                'error': 'Invalid session ID'
-            }), 404
-        
-        session = active_sessions[session_id]
-        quiz = session['quiz']
-        current_section_num = quiz.current_section
-        
-        # Get all question IDs from current section
-        section_difficulty = quiz.sections[current_section_num]['difficulty']
-        section_question_ids = quiz.questions_df[
-            quiz.questions_df['difficulty_numeric'] == section_difficulty
-        ]['id'].tolist()
-        
-        # Remove only current section's questions from asked_questions
-        quiz.asked_question_ids = {
-            qid for qid in quiz.asked_question_ids 
-            if qid not in section_question_ids
-        }
-        
-        # Reset section state
-        quiz.section_exhausted = False
-        
-        # Start the section fresh
-        questions = quiz.start_section(current_section_num, reset_section=True)
-        
-        if questions is not None:
-            session['current_question_index'] = 0
-            
-            return jsonify({
-                'success': True,
-                'message': f'Restarting {quiz.sections[current_section_num]["name"]} section',
-                'section': current_section_num,
-                'section_name': quiz.sections[current_section_num]['name'],
-                'question': format_question(questions[0]),
-                'total_questions_in_section': len(questions)
-            }), 200
-        else:
-            return jsonify({
-                'success': False,
-                'error': 'Failed to restart section'
-            }), 500
-        
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
-
-# ============================================================================
-# GENERAL ENDPOINTS
-# ============================================================================
-
-@app.route('/api/questions/random', methods=['GET'])
-def get_random_questions():
-    """Get random questions"""
-    try:
-        n = int(request.args.get('n', 10))
-        difficulty = request.args.get('difficulty')
-        
-        if difficulty is not None:
-            difficulty = int(difficulty)
-        
-        questions = model_package.get_random_questions(n=n, difficulty=difficulty)
-        formatted_questions = [format_question(q) for q in questions]
-        
-        return jsonify({
-            'success': True,
-            'questions': formatted_questions,
-            'count': len(formatted_questions)
-        }), 200
-        
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
-
-@app.route('/api/question/<int:question_id>', methods=['GET'])
-def get_question_by_id(question_id):
-    """Get specific question by ID"""
-    try:
-        question = model_package.get_question_by_id(question_id)
-        
-        if question is None:
-            return jsonify({
-                'success': False,
-                'error': 'Question not found'
-            }), 404
-        
-        return jsonify({
-            'success': True,
-            'question': format_question(question)
-        }), 200
-        
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
-
-@app.route('/api/model/info', methods=['GET'])
-def get_model_info():
-    """Get model metadata and info"""
-    try:
-        return jsonify({
-            'success': True,
-            'metadata': model_package.metadata,
-            'active_sessions': len(active_sessions)
-        }), 200
-        
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
-
-@app.route('/api/session/end/<session_id>', methods=['DELETE'])
-def end_session(session_id):
-    """End a quiz session and clean up"""
-    try:
-        if session_id in active_sessions:
-            session = active_sessions[session_id]
-            quiz = session['quiz']
-            
-            if session['type'] == 'adaptive':
-                final_stats = quiz.get_stats()
-            else:
-                final_stats = quiz.get_progress()
-            
-            del active_sessions[session_id]
-            
-            return jsonify({
-                'success': True,
-                'message': 'Session ended',
-                'final_stats': final_stats
-            }), 200
-        else:
-            return jsonify({
-                'success': False,
-                'error': 'Session not found'
-            }), 404
-            
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        print(f"Error in get_section_analytics: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/api/health', methods=['GET'])
 def health_check():
-    """Health check endpoint"""
     return jsonify({
         'success': True,
         'status': 'healthy',
-        'model_loaded': model_package is not None,
         'active_sessions': len(active_sessions)
     }), 200
 
-# ============================================================================
-# ERROR HANDLERS
-# ============================================================================
-
-@app.errorhandler(404)
-def not_found(error):
-    return jsonify({
-        'success': False,
-        'error': 'Endpoint not found'
-    }), 404
-
-@app.errorhandler(500)
-def internal_error(error):
-    return jsonify({
-        'success': False,
-        'error': 'Internal server error'
-    }), 500
-
-# ============================================================================
-# MAIN
-# ============================================================================
 
 if __name__ == '__main__':
     print("\n" + "="*60)
-    print("ADAPTIVE QUIZ SYSTEM - Flask API Server")
+    print("ADAPTIVE QUIZ SYSTEM - Flask API (FIXED)")
     print("="*60)
-    print("\nFeatures:")
-    print("  - Adaptive quiz with ability progression")
-    print("  - Section-based quiz with auto-reload on failure")
-    print("  - 11th question logic (5 correct + last wrong)")
-    print("  - Section restart when questions exhausted")
-    print("\nAPI Endpoints:")
-    print("  POST /api/adaptive/start - Start adaptive quiz")
-    print("  POST /api/adaptive/submit - Submit adaptive answer")
-    print("  POST /api/section/start - Start section quiz")
-    print("  POST /api/section/submit - Submit section answer")
-    print("  POST /api/section/restart - Restart current section")
-    print("  GET  /api/section/progress/<session_id> - Get progress")
-    print("  GET  /api/health - Health check")
+    print("\nFixes:")
+    print("  - All NumPy types converted to native Python types")
+    print("  - Analytics properly serialized to JSON")
+    print("  - Section quiz tracks all answers across sections")
+    print("  - Better error handling and debugging")
     print("\nServer starting on http://0.0.0.0:5000")
     print("="*60 + "\n")
     

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Analytics</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/analytics.css') }}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+</head>
+<body>
+    <div class="analytics-container">
+        <div class="analytics-header">
+            <button class="btn-back" onclick="window.location.href='/'">← Back to Home</button>
+            <h1 class="analytics-title">Quiz Performance Analytics</h1>
+        </div>
+
+        <div id="loadingState" class="loading-state">
+            <div class="spinner"></div>
+            <p>Loading analytics data...</p>
+        </div>
+
+        <div id="analyticsContent" style="display: none;">
+            <div class="summary-cards">
+                <div class="summary-card">
+                    <div class="card-icon">📝</div>
+                    <div class="card-content">
+                        <h3 id="totalQuestions">0</h3>
+                        <p>Total Questions</p>
+                    </div>
+                </div>
+                <div class="summary-card">
+                    <div class="card-icon">✅</div>
+                    <div class="card-content">
+                        <h3 id="correctAnswers">0</h3>
+                        <p>Correct Answers</p>
+                    </div>
+                </div>
+                <div class="summary-card">
+                    <div class="card-icon">📊</div>
+                    <div class="card-content">
+                        <h3 id="accuracyRate">0%</h3>
+                        <p>Accuracy Rate</p>
+                    </div>
+                </div>
+                <div class="summary-card">
+                    <div class="card-icon">⏱️</div>
+                    <div class="card-content">
+                        <h3 id="totalTime">0:00</h3>
+                        <p>Total Time</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="charts-row">
+                <div class="chart-container">
+                    <h3 class="chart-title">Performance Overview</h3>
+                    <canvas id="performanceChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3 class="chart-title">Time Distribution</h3>
+                    <canvas id="timeChart"></canvas>
+                </div>
+            </div>
+
+            <div class="charts-row">
+                <div class="chart-container">
+                    <h3 class="chart-title">Difficulty Breakdown</h3>
+                    <canvas id="difficultyChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3 class="chart-title">Response Timeline</h3>
+                    <canvas id="timelineChart"></canvas>
+                </div>
+            </div>
+
+            <div class="detailed-stats">
+                <h3 class="section-title">Question-by-Question Analysis</h3>
+                <div class="stats-table-container">
+                    <table class="stats-table" id="detailedTable">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Question ID</th>
+                                <th>Difficulty</th>
+                                <th>Your Answer</th>
+                                <th>Result</th>
+                                <th>Time Spent</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="insights-section">
+                <h3 class="section-title">Performance Insights</h3>
+                <div class="insights-grid" id="insightsGrid"></div>
+            </div>
+
+            <div class="action-buttons">
+                <button class="btn btn-primary" onclick="window.print()">📄 Print Report</button>
+                <button class="btn btn-secondary" onclick="window.location.href='/'">🏠 Back to Home</button>
+            </div>
+        </div>
+
+        <div id="errorState" class="error-state" style="display: none;">
+            <div class="error-icon">⚠️</div>
+            <h2>No Analytics Data Available</h2>
+            <p>Please complete a quiz first to view your analytics.</p>
+            <button class="btn btn-primary" onclick="window.location.href='/'">Start a Quiz</button>
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='js/analytics.js') }}"></script>
+</body>
+</html>
