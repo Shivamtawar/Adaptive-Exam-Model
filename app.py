@@ -197,7 +197,7 @@ class SectionBasedQuizSystem:
         self.current_section = 0
         self.section_questions = []
         self.section_answers = []
-        self.all_answers = []  # Track ALL answers across sections
+        self.all_answers = []
         self.asked_question_ids = set()
         self.completed_sections = []
         self.section_exhausted = False
@@ -327,7 +327,7 @@ class SectionBasedQuizSystem:
         })
         
         self.current_section += 1
-        self.section_answers = []  # Reset for new section
+        self.section_answers = []
         
         if self.current_section >= len(self.sections):
             return None
@@ -396,12 +396,29 @@ class QuizModelPackage:
         return question.iloc[0].to_dict()
 
 
-# Register classes
-temp_module = types.ModuleType('quiz_model_package')
-temp_module.QuizModelPackage = QuizModelPackage
-temp_module.AdaptiveQuizSystem = AdaptiveQuizSystem
-temp_module.SectionBasedQuizSystem = SectionBasedQuizSystem
-sys.modules['quiz_model_package'] = temp_module
+# Register classes for dill deserialization
+def register_classes():
+    # Create a module for deserialization compatibility
+    if 'quiz_model_package' not in sys.modules:
+        module = types.ModuleType('quiz_model_package')
+        sys.modules['quiz_model_package'] = module
+    else:
+        module = sys.modules['quiz_model_package']
+    
+    # Assign classes to the module
+    module.QuizModelPackage = QuizModelPackage
+    module.AdaptiveQuizSystem = AdaptiveQuizSystem
+    module.SectionBasedQuizSystem = SectionBasedQuizSystem
+    
+    # Also register in __main__ to handle Gunicorn's context
+    if '__main__' not in sys.modules:
+        sys.modules['__main__'] = sys.modules[__name__]
+    sys.modules['__main__'].QuizModelPackage = QuizModelPackage
+    sys.modules['__main__'].AdaptiveQuizSystem = AdaptiveQuizSystem
+    sys.modules['__main__'].SectionBasedQuizSystem = SectionBasedQuizSystem
+
+# Call the registration before loading the pickle file
+register_classes()
 
 # Load model
 print("Loading model...")
