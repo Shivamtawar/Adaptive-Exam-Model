@@ -1,0 +1,73 @@
+{
+  "total_questions": 482,
+  "datasets": [
+    "Block_1_Arithmetic",
+    "Block_2_NumberSystem",
+    "Block_7_VARC"
+  ],
+  "difficulty_distribution": {
+    "2": 146,
+    "1": 124,
+    "3": 122,
+    "0": 90
+  },
+  "answer_distribution": {
+    "0": 151,
+    "1": 138,
+    "3": 100,
+    "2": 93
+  },
+  "tag_categories": [
+    "Allegations",
+    "Averages",
+    "CRITICAL REASONING",
+    "FACT INFERENCE JUDGEMENT",
+    "FILL IN THE BLANKS",
+    "GRAMMAR",
+    "IDIOMS AND PHRASES",
+    "Interest",
+    "Number System ",
+    "PARAGRAPH COMPLETION",
+    "PARAJUMBLES",
+    "Profit and Loss",
+    "Progressions ",
+    "READING COMPREHENSION",
+    "Ratio, Proportion & Variance",
+    "Time & Work",
+    "Time and Distance"
+  ],
+  "feature_columns": [
+    "id",
+    "question_text",
+    "option_a",
+    "option_b",
+    "option_c",
+    "option_d",
+    "answer",
+    "difficulty",
+    "difficulty_numeric",
+    "answer_numeric",
+    "tag_encoded",
+    "option_a_numeric",
+    "option_b_numeric",
+    "option_c_numeric",
+    "option_d_numeric",
+    "correct_option_value",
+    "question_length",
+    "question_word_count",
+    "options_mean",
+    "options_std",
+    "options_range",
+    "answer_position",
+    "difficulty_rarity",
+    "difficulty_bin"
+  ],
+  "preprocessing_date": "2025-10-19 13:47:56",
+  "fixes_applied": [
+    "Aggressive option extraction from question text",
+    "Removed encoding issues (\ufffd characters)",
+    "Removed malformed options",
+    "Cleaned all option texts",
+    "Removed paragraph-based questions"
+  ]
+}

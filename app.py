@@ -1,8 +1,9 @@
 """
-Flask API for Adaptive Quiz System (WITH ANALYTICS - FIXED)
+Flask API for Adaptive Quiz System (FIXED for String IDs)
 Save as: app.py
 
 Fixes:
+- Handles string IDs (e.g., 'Q000321') instead of requiring integers
 - Properly converts NumPy types to native Python types
 - Ensures all analytics data is JSON serializable
 - Handles empty/NaN values gracefully
@@ -56,6 +57,20 @@ def make_json_safe(obj):
     elif pd.isna(obj):
         return None
     return obj
+
+# Helper function to safely convert to int (handles both string and numeric IDs)
+def safe_to_int(value):
+    """Safely convert value to int, handling string IDs"""
+    if isinstance(value, (int, np.integer)):
+        return int(value)
+    elif isinstance(value, str):
+        # If it's a string ID like 'Q000321', keep it as string
+        return value
+    else:
+        try:
+            return int(value)
+        except (ValueError, TypeError):
+            return value
 
 # ============================================================================
 # DEFINE CLASSES
@@ -115,7 +130,7 @@ class AdaptiveQuizSystem:
         difficulty = int(question['difficulty_numeric'])
         
         self.response_history.append({
-            'question_id': int(question_id),
+            'question_id': str(question_id),  # Keep as string
             'difficulty': int(difficulty),
             'correct': bool(is_correct),
             'user_answer': int(user_answer),
@@ -269,7 +284,7 @@ class SectionBasedQuizSystem:
         
         answer_record = {
             'question_index': int(question_index),
-            'question_id': int(question['id']),
+            'question_id': str(question['id']),  # Keep as string
             'user_answer': int(user_answer),
             'correct_answer': int(correct_answer),
             'is_correct': bool(is_correct),
@@ -452,8 +467,9 @@ def create_session_id():
     return str(uuid.uuid4())
 
 def format_question(question_dict):
+    """Format question for API response - handles string IDs"""
     return {
-        'id': int(question_dict['id']),
+        'id': str(question_dict['id']),  # Keep as string
         'question': str(question_dict['question_text']),
         'options': {
             'a': str(question_dict['option_a']),
@@ -496,6 +512,8 @@ def start_adaptive_quiz():
         
     except Exception as e:
         print(f"Error in start_adaptive_quiz: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/api/adaptive/submit', methods=['POST'])
@@ -503,7 +521,7 @@ def submit_adaptive_answer():
     try:
         data = request.json
         session_id = data.get('session_id')
-        question_id = data.get('question_id')
+        question_id = data.get('question_id')  # Now a string
         user_answer = data.get('answer')
         time_spent = data.get('time_spent', 0)
         
@@ -545,6 +563,8 @@ def submit_adaptive_answer():
         
     except Exception as e:
         print(f"Error in submit_adaptive_answer: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/api/adaptive/analytics/<session_id>', methods=['GET'])
@@ -615,6 +635,8 @@ def start_section_quiz():
         
     except Exception as e:
         print(f"Error in start_section_quiz: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/api/section/submit', methods=['POST'])
@@ -744,7 +766,8 @@ def health_check():
     return jsonify({
         'success': True,
         'status': 'healthy',
-        'active_sessions': len(active_sessions)
+        'active_sessions': len(active_sessions),
+        'model_questions': len(model_package.questions_df)
     }), 200
 
 

@@ -1,0 +1,187 @@
+﻿ID,Block,Chapter / Subtopic,Question Type,Question Text,Data / Paragraph,Options / Answer Choices,Correct Answer,Difficulty Level
+Q001, Numbers ,Number System ,MCQ,Last digit of 81�82�83ׅ�89, -,(a) 0 (b) 9 (c) 7 (d) 2,(a),Very Easy
+Q002, Numbers ,Number System ,MCQ,"Two-digit number: sum of digits = 10, reversed decreases by 54", -,(a) 28?(b) 19?(c) 37?(d) 46,(a),Very Easy
+Q003, Numbers ,Number System ,MCQ,Two-digit number � sum of digits = 405; reverse � sum = 486, -,(a) 81?(b) 45?(c) 36?(d) 54,(b),Very Easy
+Q004, Numbers ,Number System ,MCQ,"Sum = 15, geometric mean 20% lower than arithmetic mean", -,"(a) 11,4?(b) 12,3?(c) 13,2?(d) 10,5",(b),Very Easy
+Q005, Numbers ,Number System ,MCQ,"Difference = 48, AM-GM difference = 2 + half of 1/3 of 96", -,"(a) 49,1?(b) 12,60?(c) 50,2?(d) 36,84",(a),Very Easy
+Q006, Numbers ,Number System ,MCQ,"A381 divisible by 11, find smallest A", -,(a) 5?(b) 6?(c) 7?(d) 9,(c),Very Easy
+Q007, Numbers ,Number System ,MCQ,"381A divisible by 9, find smallest A", -,(a) 5?(b) 5?(c) 7?(d) 6,(d),Very Easy
+Q008, Numbers ,Number System ,MCQ,Remainder of (96 + 1) � 8, -,(a) 0?(b) 3?(c) 7?(d) 2,(d),Very Easy
+Q009, Numbers ,Number System ,MCQ,"Ratio LCM:HCF of 5,15,20", -,(a) 8:1?(b) 14:3?(c) 12:2?(d) 12:1,(d),Very Easy
+Q010, Numbers ,Number System ,MCQ,"LCM of 5/2, 8/9, 11/14", -,(a) 280?(b) 360?(c) 420?(d) None,(d),Very Easy
+Q011, Numbers ,Number System ,MCQ,"If A is even, which is always true?", -,(a) 3A divisible by 6?(b) 3A+5 divisible by 11?(c) (A�+3)/4 divisible by 7?(d) All,(a),Very Easy
+Q012, Numbers ,Number System ,MCQ,"Five-digit number: sum of first 4 digits = sum of all 5 digits, which does not necessarily divide it?", -,(a) 10?(b) 2?(c) 4?(d) 5,(c),Very Easy
+Q013, Numbers ,Number System ,MCQ,"15B divisible by 6, property of B", -,(a) even?(b) odd?(c) divisible by 6?(d) both a & c,(d),Very Easy
+Q014, Numbers ,Number System ,MCQ,"P=23.3�?.?, Q=25.3�.?�, find GCD", -,(a) 2�3�5�7?(b) 3�2�?(c) 2��3�?(d) 23�3,(d),Very Easy
+Q015, Numbers ,Number System ,MCQ,Units digit: 256�?� + 36?�? + 73??, -,(a) 4?(b) 0?(c) 6?(d) 5,(b),Very Easy
+Q016, Numbers ,Number System ,MCQ,Units digit: 55?�? + 73??�? + 22??�, -,(a) 4?(b) 0?(c) 6?(d) 5,(c),Very Easy
+Q017, Numbers ,Number System ,MCQ,Units digit: 1��� + 1�� + 1�� + � + 1�??, -,(a) 1?(b) 9?(c) 7?(d) 0,(b),Very Easy
+Q018, Numbers ,Number System ,MCQ,Units digit: 1���1���1�����1�??, -,(a) 4?(b) 3?(c) 7?(d) 0,(d),Very Easy
+Q019, Numbers ,Number System ,MCQ,Number of zeros in 1090!, -,(a) 270?(b) 268?(c) 269?(d) 271,(a),Very Easy
+Q020, Numbers ,Number System ,MCQ,"146! divisible by 5?, max n", -,(a) 34?(b) 35?(c) 36?(d) 37,(b),Very Easy
+Q021, Numbers ,Number System ,MCQ,Number of divisors of 1420, -,(a) 14?(b) 15?(c) 13?(d) 12,(d),Very Easy
+Q022, Numbers ,Number System ,MCQ,HCF & LCM of (x��5x+6) & (x��7x+10), -,"(a) (x�2),(x�2)(x�3)(x�5)?(b) (x�2),(x�2)(x�3)?(c) (x�3),(x�2)(x�3)(x�)?(d) (x�2),(x�2)(x�3)(x�5)�5",(a),Very Easy
+Q023, Numbers ,Number System ,MCQ,Number divisible by 24, -,"(a) 4,32,15,604?(b) 25,61,284?(c) 13,62,480?(d) All",(c),Easy
+Q024, Numbers ,Number System ,MCQ,Divisible by 88, -,(a) 22 & 8?(b) 11 & 8?(c) 11 & thrice 2?(d) All,(d),Easy
+Q025, Numbers ,Number System ,MCQ,Number of divisors of 10800, -,(a) 57?(b) 60?(c) 72?(d) 64,(b),Easy
+Q026, Numbers ,Number System ,MCQ,"Product of 3 consecutive numbers, first even, divisible by", -,(a) 12?(b) 24?(c) 6?(d) All,(d),Easy
+Q027, Numbers ,Number System ,MCQ,Birds on branches problem, -,(a) 3?(b) 4?(c) 5?(d) 6,(a),Easy
+Q028, Numbers ,Number System ,MCQ,"Square of number >1000 not divisible by 3, remainder �3", -,(a) 1?(b) 2?(c) 0?(d) 1 or 2,(a),Easy
+Q029, Numbers ,Number System ,MCQ,Value of (153?212)/(352?34), -,(a) 3?(b) 15?(c) 21?(d) 12,(b),Easy
+Q030, Numbers ,Number System ,MCQ,"If 2<x<4 & 1<y<3, ratio of upper x+y to lower x�y", -,(a) 6?(b) 7?(c) 8?(d) None,(d),Easy
+Q031, Numbers ,Number System ,MCQ,"Two-digit number: sum of squares = 13, subtract 9 ? reversed", -,(a) 12?(b) 32?(c) 42?(d) 52,(b),Easy
+Q032, Numbers ,Number System ,MCQ,Product of number & reverse = 2430, -,(a) 54 & 45?(b) 56 & 65?(c) 53 & 35?(d) 85 & 58,(a),Easy
+Q033, Numbers ,Number System ,MCQ,"Two numbers: difference = 66, LCM = 360", -,(a) 120 & 54?(b) 90 & 24?(c) 180 & 114?(d) 130 & 64,(b),Easy
+Q034, Numbers ,Number System ,MCQ,"Two numbers: sum = 85, LCM = 102", -,(a) 30 & 55?(b) 17 & 68?(c) 35 & 55?(d) 51 & 34,(d),Easy
+Q035, Numbers ,Number System ,MCQ,Compare greater : 5?? or 2��� & (0.4)^4 or (0.8)^3, -,(a) 5?? and (0.8)^3?(b) 2��� and (0.4)^4  (c) 5?? and (0.4)^4,(a),Easy
+Q036, Numbers ,Number System ,MCQ,Can fraction numerator < denominator = fraction numerator > denominator?, -,(a) Yes?(b) No,(b),Easy
+Q037, Numbers ,Number System ,MCQ,"AM smaller by 24 than larger, GM exceeds smaller by 12", -,(a) 6 & 54?(b) 8 & 56?(c) 12 & 60?(d) 7 & 55,(a),Moderate
+Q038, Numbers ,Number System ,MCQ,"Numbers between 200 & 300 not divisible by 2,3,4,5", - ,(a) 27?(b) 26?(c) 25?(d) 28,(b),Moderate
+Q039, Numbers ,Number System ,MCQ,(15n� + 6n� + 5n + x)/n not integer, - ,(a) n positive?(b) x divisible by n?(c) x not divisible by n?(d) (a) & (c),(c),Moderate
+Q040, Numbers ,Number System ,MCQ,Unit digit of 36234�33512�39180 � 5429�25123�31512, - ,(a) 8?(b) 0?(c) 6?(d) 5,(c),Moderate
+Q041, Numbers ,Number System ,MCQ,"Difference 1025�7 & 1024+x divisible by 3, find x", - ,(a) 3?(b) 2?(c) 4?(d) 6,(b),Moderate
+Q042, Numbers ,Number System ,MCQ,Solve xxx +++ 222 3x = x, - ,(a) 1?(b) 3?(c) 6?(d) 12?(e) 9,(b),Moderate
+Q043, Numbers ,Number System ,MCQ,"Number �22 + number = � (number�), find number", - ,(a) 45?(b) 46?(c) 47?(d) insufficient,(b),Moderate
+Q044, Numbers ,Number System ,MCQ,"1255/311 + 848/1618, units digit", - ,(a) 4?(b) 6?(c) 8?(d) 0,(d),Moderate
+Q045, Numbers ,Number System ,MCQ,"Mean of 1,2,22,�231", - ,(a) 224�225?(b) 225�226?(c) 226�227?(d) 229�230,(c),Moderate
+Q046, Numbers ,Number System ,MCQ,"xy � ab = 0.xyxy�, xy<ab, find ab", - ,(a) 11?(b) 33?(c) 99?(d) 66,(c),Moderate
+Q047, Numbers ,Number System ,MCQ,"xy � ab = pqr, r=2y, q=2(x+y), p=2x, x,y<5, q?0", - ,(a) 11?(b) 13?(c) 31?(d) 22,(d),Moderate
+Q048, Numbers ,Number System ,MCQ,"[x]� + {x}� = �7.91, find x", - ,(a) �2.03?(b) �1.97?(c) �2.97?(d) �1.7,(d),Moderate
+Q049, Numbers ,Number System ,MCQ,165? + 215� divisible by, - ,(a) 31?(b) 13?(c) 27?(d) 33,(d),Moderate
+Q050, Numbers ,Number System ,MCQ,"AB + XY = 1XP, A ? 0, digits distinct, find A", - ,(a) 6?(b) 7?(c) 9?(d) 8,(c),Moderate
+Q051, Numbers ,Number System ,MCQ,"Sum=20, GM 20% lower than AM, find ratio", - ,(a) 4:1?(b) 9:1?(c) 1:1?(d) 17:3,(a),Moderate
+Q052, Numbers ,Number System ,MCQ,Highest power of 990 dividing 1090!, - ,(a) 101?(b) 100?(c) 108?(d) 109,(c),Moderate
+Q053, Numbers ,Number System ,MCQ,"146! divisible by 6?, find max n", - ,(a) 74?(b) 70?(c) 76?(d) 75,(b),Moderate
+Q054, Numbers ,Number System ,MCQ,Last two digits of 35�34�33ׅ�26, - ,(a) 00?(b) 40?(c) 30?(d) 10,(a),Moderate
+Q055, Numbers ,Number System ,MCQ,333555 + 555333 divisible by, - ,(a) 2?(b) 3?(c) 37?(d) All,(d),Moderate
+Q056, Numbers ,Number System ,MCQ,"[x]� + {x}� = 25.16, find x", - ,(a) 5.16?(b) �4.84?(c) Both a & b?(d) 4.84,(c),Moderate
+Q057, Numbers ,Number System ,MCQ,"Two-digit number: square tens digit + product =52, square units + product =117", -,(a) 18?(b) 39?(c) 49?(d) 28,(c),Moderate
+Q058, Numbers ,Number System ,MCQ,Two-digit number < sum of squares of digits by 11 & > double product by 5, -,"(a) 15, 95?(b) 95?(c) Both a & b?(d) 15,95,12345",(a),Difficult
+Q059, Numbers ,Number System ,MCQ,Lower of two successive numbers if square of sum exceeds sum of squares by 112, -,(a) 6?(b) 7?(c) 8?(d) 9,(b),Difficult
+Q060, Numbers ,Number System ,MCQ,Denominator of fraction with numerator 2: fractions with denom+3 & denom�5 sum =19/42, -,(a) 7?(b) 8?(c) 12?(d) 9,(d),Difficult
+Q061, Numbers ,Number System ,MCQ,Last two digits of 15�37�63�51�97�17, -,(a) 35?(b) 45?(c) 55?(d) 85,(a),Difficult
+Q062, Numbers ,Number System ,MCQ,"Fraction: denom = numerator��1; fraction +2 exceeds 1/3, fraction �3 positive & <1/10", -,(a) 3/8?(b) 4/15?(c) 5/24?(d) 6/35,(b),Difficult
+Q063, Numbers ,Number System ,MCQ,Sum of 3-digit numbers leaving remainder 4 when divided by 5, -,"(a) 98,270?(b) 99,270?(c) 1,02,090?(d) 90,270",(b),Difficult
+Q064, Numbers ,Number System ,MCQ,Sum of 2-digit numbers leaving remainder 3 when divided by 7, -,(a) 686?(b) 676?(c) 666?(d) 656,(b),Difficult
+Q065, Numbers ,Number System ,MCQ,Sum of odd 3-digit numbers divisible by 5, -,"(a) 50,500?(b) 50,250?(c) 50,000?(d) 49,500",(d),Difficult
+Q066, Numbers ,Number System ,MCQ,"Product of 2-digit number by reverse =2430, find lower", -,(a) 54?(b) 52?(c) 63?(d) 45,(d),Difficult
+Q067, Numbers ,Number System ,MCQ,Lowest of 3 numbers: cubes compared to product by �2/3, -,(a) 31/3?(b) 91/3?(c) 2?(d) Any?(e) None,(a),Difficult
+Q068, Numbers ,Number System ,MCQ,Pairs of numbers whose squares differ by 45, -,(a) 1?(b) 2?(c) 3?(d) 4,(c),Difficult
+Q069, Numbers ,Number System ,MCQ,"Two-digit numbers: sum digits ?7, sum squares ?30, reversed ? half original", -,(a) 52?(b) 51?(c) 49?(d) 53,(a),Difficult
+Q070, Numbers ,Number System ,MCQ,"4-digit number: sum of first 3 digits=14, last 3=15, sum of squares max", -,(a) 2572?(b) 1863?(c) 2573?(d) None,(d),Difficult
+Q071, Numbers ,Number System ,MCQ,"4-digit number: sum of 1st & 3rd=4, 2nd & 4th=15, units exceeds thousands by 7, min sum of products", -,(a) 4708?(b) 1738?(c) 2629?(d) 1812,(b),Difficult
+Q072, Numbers ,Number System ,MCQ,"2-digit number � reverse =4 remainder 15, subtract 9 = sum of squares", -,(a) 71?(b) 83?(c) 99?(d) None,(d),Difficult
+Q073, Numbers ,Number System ,MCQ,"Number x, x + x� minimum", -,(a) �0.5?(b) 0.5?(c) �1.5?(d) 1.5,(a),Difficult
+Q074, Numbers ,Number System ,MCQ,"22225555 + 55552222 � 7, remainder", -,(a) 0?(b) 2?(c) 4?(d) 5,(a),Difficult
+Q075, Numbers ,Number System ,MCQ,"5-digit number divisible by 8,12,15,20 leaving remainders 5,9,12,17; lowest x", -,(a) 10017?(b) 10057?(c) 10097?(d) 10077,(d),Difficult
+Q076, Numbers ,Number System ,MCQ,"32? �1 divisible by 2n+3, find n", -,(a) 1?(b) 2?(c) 3?(d) None,(d),Difficult
+Q077, Numbers ,Number System ,MCQ,10? � � +7n divisible by 2n+2, -,(a) 2?(b) 3?(c) 7?(d) None,(d),Difficult
+Q078, Numbers ,Number System ,MCQ,32?���� � 9 remainder?, -,(a) 4?(b) 7?(c) 1?(d) 2,(a),Difficult
+Q079, Numbers ,Number System ,MCQ,Remainder 1989�1990�19923 �7, -,(a) 0?(b) 1?(c) 5?(d) 2,(d),Difficult
+Q080, Numbers ,Number System ,MCQ,Remainder 2�?? �3, -,(a) 3?(b) 0?(c) 1?(d) 2,(c),Difficult
+Q081, Numbers ,Number System ,MCQ,Remainder 1989�1990�19923 �7, -,(a) 1?(b) 5?(c) 6?(d) 4,(c),Difficult
+Q082, Numbers ,Number System ,MCQ,Last digit of 1�+2�+�+99�, -,(a) 0?(b) 1?(c) 2?(d) 3,(a),Difficult
+Q083, Numbers ,Number System ,MCQ,"gcd(2�??�1, 2��?�1)", -,(a) 2�?�1?(b) 2??�1?(c) 2??�1?(d) 2�?�1,(a),Difficult
+Q084, Numbers ,Number System ,MCQ,"gcd(111�100 ones, 11�60 ones)", -,(a) 111�40 ones?(b) 111�25 ones?(c) 111�20 ones?(d) 111�60 ones,(c),Difficult
+Q085, Numbers ,Number System ,MCQ,Last digit of 1�+2�+�+99�, -,(a) 0?(b) 1?(c) 2?(d) 5,(a),Difficult
+Q086, Numbers ,Progressions ,MCQ,"AP 11, 13, 15� Which term is 65?", -,(a) 25th?(b) 26th?(c) 27th?(d) 28th,(d),Very Easy
+Q087, Numbers ,Progressions ,MCQ,"25th term of sequence 50, 45, 40�", -,(a) ?55?(b) ?65?(c) ?70?(d) ?75,(c),Very Easy
+Q088, Numbers ,Progressions ,MCQ,Ajit saves Rs.400 more each year; first year Rs.2000; after how many years savings >100000?, -,(a) 19?(b) 20?(c) 21?(d) 18,(a),Very Easy
+Q089, Numbers ,Progressions ,MCQ,6th & 20th terms of AP are 8 & ?20; find 30th term, -,(a) ?34?(b) ?40?(c) ?32?(d) ?30,(b),Very Easy
+Q090, Numbers ,Progressions ,MCQ,"How many terms in AP 10, 15, 20,�,120?", -,(a) 21?(b) 22?(c) 23?(d) 24,(c),Very Easy
+Q091, Numbers ,Progressions ,MCQ,"Number of terms of series 1/27, 1/9, 1/3,�729", -,(a) 10?(b) 11?(c) 12?(d) 13,(a),Very Easy
+Q092, Numbers ,Progressions ,MCQ,"5th term of G.P.=80, first=5; 4th term?", -,(a) 20?(b) 15?(c) 40?(d) 25,(c),Very Easy
+Q093, Numbers ,Progressions ,MCQ,Mindworkzz pay scale 12000�1500�22500; years to reach max?, -,(a) 7?(b) 8?(c) 9?(d) 10,(a),Very Easy
+Q094, Numbers ,Progressions ,MCQ,Natural numbers between 100�500 multiples of 9, -,(a) 44?(b) 48?(c) 47?(d) 50,(a),Very Easy
+Q095, Numbers ,Progressions ,MCQ,"Sum of first 20 terms; first=25, third=35", -,(a) 1200?(b) 1250?(c) 1400?(d) 1450,(d),Very Easy
+Q096, Numbers ,Progressions ,MCQ,39 divided into 3 parts in AP; sum of squares=515; largest number, -,(a) 17?(b) 15?(c) 13?(d) 11,(b),Very Easy
+Q097, Numbers ,Progressions ,MCQ,"Sushil earns 10, 20, 40� for 20 days; total?", -,"(a) 10,220?(b) 10,220�10?(c) 10,220�1?(d) 219",(b),Very Easy
+Q098, Numbers ,Progressions ,MCQ,Sum of numbers 1�100 excluding multiples of 7, -,(a) 4315?(b) 4245?(c) 4320?(d) 4160,(a),Very Easy
+Q099, Numbers ,Progressions ,MCQ,"GP: 3rd term 1, 8th term 81; find 2nd term", -,(a) 3?(b) 1?(c) 1/27?(d) 1/9,(d),Very Easy
+Q100, Numbers ,Progressions ,MCQ,"Sum of 5 numbers in AP=35, sum of squares=285; third term", -,(a) 5?(b) 7?(c) 6?(d) 8,(b),Very Easy
+Q101, Numbers ,Progressions ,MCQ,Number of terms of 26+24+22+�; sum=182, -,(a) 13?(b) 14?(c) Both a & b?(d) 15,(c),Very Easy
+Q102, Numbers ,Progressions ,MCQ,"Lowest number in AP; sum of terms=105, greatest=6�least", -,"(a) 5?(b) 10?(c) 15?(d) a,b & c",(d),Very Easy
+Q103, Numbers ,Progressions ,MCQ,"GP: 3rd term=1, 7th term=8; general term", -,(a) (2�/?)??�?(b) (2�/�)??�?(c) (2�/?)�???(d) (2�/?)�??,(a),Very Easy
+Q104, Numbers ,Progressions ,MCQ,"Sum of first & third term=15, sum of first 3 terms=21; progression", -,"(a) 3,6,12�?(b) 12,6,3�?(c) Both?(d) None",(c),Very Easy
+Q105, Numbers ,Progressions ,MCQ,Ishita's salary is ?5000 per month in the first year. She has joined in the scale of 5000-500-10000. After how many years will her expenses be ?64800 ?, -,(a) 8?(b) 7?(c) 6?(d) Cannot determine,(d),Very Easy
+Q106, Numbers ,Progressions ,MCQ,"Money amounts to 1500 in 5 yrs, 2000 in 10 yrs; simple interest; sum?", -,(a) 1250?(b) 1200?(c) 1150?(d) 1000,(d),Very Easy
+Q107, Numbers ,Progressions ,MCQ,"Sum of 3 numbers in GP=13, sum of squares=91; smallest number", -,(a) 1?(b) 3?(c) 4?(d) 12,(a),Very Easy
+Q108, Numbers ,Progressions ,MCQ,"Find 1st term of AP; 8th=60, 12th=80", -,(a) 15?(b) 20?(c) 25?(d) 30,(c),Easy
+Q109, Numbers ,Progressions ,MCQ,"AP: first=13, diff=4; which is a term?", -,(a) 4003?(b) 10091?(c) 7881?(d) 13631,(c),Easy
+Q110, Numbers ,Progressions ,MCQ,"Anuj saves Rs.600 first week, Rs.30 more each week; 30th week earnings?", -,(a) 31050?(b) 32320?(c) 32890?(d) 32900,(a),Easy
+Q111, Numbers ,Progressions ,MCQ,Areas of squares in GP; sides?, -,(a) A.P.?(b) G.P.?(c) H.P.?(d) Nothing,(b),Easy
+Q112, Numbers ,Progressions ,MCQ,"Number of terms in GP 5,10,20…1280", -,(a) 6?(b) 8?(c) 9?(d) 10,(c),Easy
+Q113, Numbers ,Progressions ,MCQ,"Number of terms in GP 5,10,20�1280", -,(a) 17?(b) 18?(c) 19?(d) 20,(a),Easy
+Q114, Numbers ,Progressions ,MCQ,4 geometric means between 5 & 160; 2nd GM?, -,(a) 80?(b) 40?(c) 10?(d) 20,(d),Easy
+Q115, Numbers ,Progressions ,MCQ,7th term = 4�5th term; 4th term=40; first term?, -,(a) 4?(b) 5?(c) 3?(d) 2,(b),Easy
+Q116, Numbers ,Progressions ,MCQ,"Identical terms in APs 21,23,25�(120 terms) & 23,26,29�(80 terms)?", -,(a) 39?(b) 40?(c) 41?(d) None,(b),Easy
+Q117, Numbers ,Progressions ,MCQ,"Sum of first 4 terms=56, first 8 terms=176; sum of first 16 terms?", -,(a) 646?(b) 640?(c) 608?(d) 536,(c),Easy
+Q118, Numbers ,Progressions ,MCQ,"X & Y: AM=41, GM=9; possible X?", -,(a) 125?(b) 49?(c) 81?(d) 25,(c),Easy
+Q119, Numbers ,Progressions ,MCQ,A>B; GM 40% lower than AM; ratio?, -,(a) 4:3?(b) 9:1?(c) 1:1?(d) 3:1,(b),Easy
+Q120, Numbers ,Progressions ,MCQ,"Saves 1000 in Jan, +500 each month; annual saving?", -,(a) 40000?(b) 45000?(c) 42000?(d) 41000,(b),Easy
+Q121, Numbers ,Progressions ,MCQ,"23rd term of 1,4,5,8,9,12�", -,(a) 33?(b) 39?(c) 45?(d) 43,(c),Easy
+Q122, Numbers ,Progressions ,MCQ,"loga, logb, logc in AP; GM of a & c?", -,(a) b?(b) b�?(c) b??(d) None,(a),Easy
+Q123, Numbers ,Progressions ,MCQ,Series 1+3+5+7� & 4+7+10�; identical terms in 1000 terms?, -,(a) 335?(b) 334?(c) 332?(d) 333,(d),Easy
+Q124, Numbers ,Progressions ,MCQ,"Sum till 23rd terms of 1,4,5,8,9�", -,(a) 585?(b) 560?(c) 540?(d) 520,(c),Easy
+Q125, Numbers ,Progressions ,MCQ,"Max sum of AP 25,24,23�", -,(a) 325?(b) 345?(c) 332.5?(d) 350,(a),Easy
+Q126, Numbers ,Progressions ,MCQ,8th term=GM of 1st & 22nd terms; sum of first 22 terms=770; common diff?, -,(a) Either 1 or 1/2?(b) 2?(c) 1?(d) Either 1 or 2,(b),Easy
+Q127, Numbers ,Progressions ,MCQ,1+3+5+7+�=1234567654321; how many terms?, -,(a) 1110111?(b) 1111011?(c) 1011111?(d) 1111111,(d),Easy
+Q128, Numbers ,Progressions ,MCQ,Squares inside squares: first side=32 cm; sum of areas?, -,(a) 2048?(b) 1024?(c) 512?(d) 4096,(a),Easy
+Q129, Numbers ,Progressions ,MCQ,Infinite GP: sum of first 2 terms=36; each term=sum of all following; sum of series?, -,(a) 48?(b) 54?(c) 72?(d) 96,(a),Easy
+Q130, Numbers ,Progressions ,MCQ,"If a � ath term = b � bth term of AP, find (a+b)th term", -,(a) 0?(b) a��b�?(c) a�b?(d) 1,(a),Moderate
+Q131, Numbers ,Progressions ,MCQ,28 divided into 4 parts in AP; prod(first�fourth):prod(second�third)=5:6; smallest part?, -,(a) 2?(b) 4?(c) 8?(d) 6,(b),Moderate
+Q132, Numbers ,Progressions ,MCQ,Find 1�3+5�7� to 100 terms, -,(a) �150?(b) �100?(c) �50?(d) 75,(b),Moderate
+Q133, Numbers ,Progressions ,MCQ,"Clock strikes 12 A.M.=1, 1 A.M.=2� in 3 days?", -,(a) 756?(b) 828?(c) 678?(d) 1288,(b),Moderate
+Q134, Numbers ,Progressions ,MCQ,"Maximum sum of 54,52,50�?", -,(a) 702?(b) 704?(c) 756?(d) 700,(c),Moderate
+Q135, Numbers ,Progressions ,MCQ,Sum of integers 100�300 divisible by 7?, -,(a) 10512?(b) 5586?(c) 10646?(d) 10546,(b),Moderate
+Q136, Numbers ,Progressions ,MCQ,"If x>1, y>1, z>1 in GP, then 1/(1+log x), etc. are in?", -,(a) AP?(b) HP?(c) GP?(d) None,(b),Moderate
+Q137, Numbers ,Progressions ,MCQ,Sum of all odd numbers 1000�2000?, -,"(a) 750,000?(b) 745,000?(c) 755,000?(d) 765,000",(a),Moderate
+Q138, Numbers ,Progressions ,MCQ,Sum of all 3-digit integers divisible by 11?, -,"(a) 49,335?(b) 41,338?(c) 44,550?(d) 47,300",(c),Moderate
+Q139, Numbers ,Progressions ,MCQ,"First=113, last=253, 6 terms; sum?", -,(a) 980?(b) 910?(c) 1098?(d) 920,(c),Moderate
+Q140, Numbers ,Progressions ,MCQ,Value of 1�2�3+2�3�4+� up to 100 terms?, -,(a) �694?(b) �626?(c) �624?(d) �660,(b),Moderate
+Q141, Numbers ,Progressions ,MCQ,Sum to n terms of 7+77+777�?, -,(a) 7(10?�9n)/81?(b) 7(10?+1�10�9n)/81?(c) 7(10?�1�10)?(d) 7(10?+1�10),(b),Moderate
+Q142, Numbers ,Progressions ,MCQ,"log a, log b, log c in AP => a,b,c in?", -,(a) AP?(b) GP?(c) HP?(d) None,(b),Moderate
+Q143, Numbers ,Progressions ,MCQ,Ball rebounds 3/5th height; initial height 20m; total distance?, -,(a) 40?(b) 60?(c) 80?(d) 120,(c),Moderate
+Q144, Numbers ,Progressions ,MCQ,"x=first term, y=nth term, p=product of n terms of GP; find p�", -,(a) (xy)^(n�1)?(b) (xy)^n?(c) (xy)^(1�n)?(d) (xy)^(n/2),(b),Moderate
+Q145, Numbers ,Progressions ,MCQ,"Infinite GP; sum=36, first 2 terms sum=32; 3rd term?", -,(a) 1/3?(b) 4/3?(c) 8/3?(d) 2,(c),Moderate
+Q146, Numbers ,Progressions ,MCQ,Value of 2^(1/3)�2^(1/6)�2^(1/12)� to infinity?, -,(a) 2�?(b) 2^(2/3)?(c) 2^(3/2)?(d) 8,(b),Moderate
+Q147, Numbers ,Progressions ,MCQ,"Infinite GP with sum 5, first term A; A?", -,(a) A<�10?(b) 0<A<10?(c) 0<A?10?(d) None,(b),Moderate
+Q148, Numbers ,Progressions ,MCQ,"Sum of 1st+3rd=50, 2nd+4th=150; 4th term?", -,(a) 120?(b) 125?(c) 135?(d) 45,(c),Moderate
+Q149, Numbers ,Progressions ,MCQ,"13th term of 2/9,1/4,2/7,1/3�?", -,(a) �2?(b) 1?(c) �3/13?(d) �2/3,(d),Moderate
+Q150, Numbers ,Progressions ,MCQ,"Sum 3rd+4th term=19, 1st+7th=22; 9th term?", -,(a) 26?(b) 17?(c) 15?(d) 16,(a),Moderate
+Q151, Numbers ,Progressions ,MCQ,"Sum of n terms =200, 3rd term=16, 6th�1st=30; n?", -,(a) 6?(b) 9?(c) 7?(d) 8,(d),Moderate
+Q152, Numbers ,Progressions ,MCQ,Four numbers inserted between 4 & 34 in AP; smallest?, -,(a) 11.5?(b) 11?(c) 12?(d) 10,(d),Moderate
+Q153, Numbers ,Progressions ,MCQ,Sum of 3-digit numbers leaving remainder 6 when �7, -,"(a) 70,208?(b) 70,780?(c) 70,680?(d) 71,270",(a),Moderate
+Q154, Numbers ,Progressions ,MCQ,"Sum of first 3 terms=24, sum squares of 1st+2nd=80; 8th term divisible by 10?", -,(a) 32?(b) 36?(c) 40?(d) 42,(a),Moderate
+Q155, Numbers ,Progressions ,MCQ,Anita & Babita meet; distances given; after how many days?, -,(a) 9?(b) 8?(c) Can't Predict?(d) 6,(c),Moderate
+Q156, Numbers ,Progressions ,MCQ,Rs.1000/year invested at 5% CI; 15 years?, -,"(a) 21,478?(b) 21,578?(c) 22,578?(d) 22,478",(b),Moderate
+Q157, Numbers ,Progressions ,MCQ,Sum to n terms S=(2n+7); 2nd term?, -,(a) 10?(b) 9?(c) 8?(d) 2,(d),Moderate
+Q158, Numbers ,Progressions ,MCQ,"Series A=2+1/2+1/8+� n terms, B=2+1+1/2+� 2n terms; B/A?", -,(a) 1/3?(b) 2?(c) 2/3?(d) 3/2,(d),Moderate
+Q159, Numbers ,Progressions ,MCQ,"Pension Rs.1000, each year 80% of previous; max total?", -,(a) 4000?(b) 5000?(c) 1500?(d) 4900,(b),Moderate
+Q160, Numbers ,Progressions ,MCQ,"Decreasing AP: sum except first = �36, sum except last = 0, 10th�6th = �16; first term?", -,(a) 16?(b) 20?(c) �16?(d) �20,(a),Difficult
+Q161, Numbers ,Progressions ,MCQ,"AP: sum 10 terms except first = 99, except 6th = 89; 1st+5th=10; 3rd term?", -,(a) 15?(b) 5?(c) 8?(d) 10,(b),Difficult
+Q162, Numbers ,Progressions ,MCQ,AP: 4th�5th=456; 9th �4th = 11 remainder 10; first term?, -,(a) �52?(b) �42?(c) �56?(d) �66,(d),Difficult
+Q163, Numbers ,Progressions ,MCQ,Mithilesh plants saplings 10m apart; total distance=1.32 km; ends at start; number of saplings?, -,(a) 15?(b) 14?(c) 13?(d) 12,(d),Difficult
+Q164, Numbers ,Progressions ,MCQ,"GP with 500 terms; sum of odd terms = P1, even = P2; common ratio?", -,(a) P2/P1?(b) P1/P2?(c) (P2+P1)/P1?(d) (P2+P1)/P2,(a),Difficult
+Q165, Numbers ,Progressions ,MCQ,"GP: sum first 10 = S1, next 10 = S2; common ratio?", -,(a) (S1/S2)^(1/10)?(b) �(S1/S2)^(1/10)?(c) �(S1/10) / S2?(d) (S1/S2)^(1/5),(c),Difficult
+Q166, Numbers ,Progressions ,MCQ,"AP & GP: 1st & 3rd terms equal, 2nd term of AP exceeds GP by 0.25, 1st term AP = 2; sum first 5 terms AP?", -,(a) 2.25 or 25?(b) 2.5?(c) 1.5?(d) 3.25,(b),Difficult
+Q167, Numbers ,Progressions ,MCQ,(2+4+�50 terms)/(1+3+�n terms) = 51/2; n=?, -,(a) 12?(b) 13?(c) 9?(d) 10,(d),Difficult
+Q168, Numbers ,Progressions ,MCQ,(666�n digits)� + (888�n digits) = ?, -,(a) (10?�1)�4/9?(b) (10�?�1)�4/9?(c) 4�10?(10?�1)/9?(d) 4�10?+1/9,(b),Difficult
+Q169, Numbers ,Progressions ,MCQ,"Interior angles of polygon in AP; smallest =120�, difference=5�; number of sides?", -,(a) 7?(b) 8?(c) 9?(d) 10,(c),Difficult
+Q170, Numbers ,Progressions ,MCQ,Sum to n terms of series 11+103+1005+�?, -,(a) 67823?(b) 34567?(c) 1111146?(d) 7678323,(c),Difficult
+Q171, Numbers ,Progressions ,MCQ,"AP: 1st+5th=26, 2nd�4th=160; sum first 7 terms?", -,(a) 110?(b) 114?(c) 112?(d) 116,(c),Difficult
+Q172, Numbers ,Progressions ,MCQ,AP: 3rd+9th=10; sum of first 11 terms?, -,(a) 55?(b) 44?(c) 66?(d) 48,(a),Difficult
+Q173, Numbers ,Progressions ,MCQ,"AP: sum squares 5th & 11th=3, 2nd�14th=P; product 1st�15th?", -,(a) (58P�39)/45?(b) (98P+39)/72?(c) (116P�39)/90?(d) (98P+39)/90,(c),Difficult
+Q174, Numbers ,Progressions ,MCQ,Ratio of harmonic mean to geometric mean = 12:13; ratio of numbers?, -,(a) 4/9 or 9/4?(b) 2/3 or 3/2?(c) 2/5 or 5/2?(d) None,(a),Difficult
+Q175, Numbers ,Progressions ,MCQ,"AP: sum 20 terms=420, sum 50 terms=2550; 1st term same as GP, GP ratio = AP difference; 11th term of GP?", -,(a) 560?(b) 512?(c) 1024?(d) 2048,(d),Difficult
+Q176, Numbers ,Progressions ,MCQ,"x, y, z in AP, xyz=4; minimum y?", -,(a) 2^(1/3)?(b) 2^(2/3)?(c) 2^(1/4)?(d) 2^(3/4),(b),Difficult
+Q177, Numbers ,Progressions ,MCQ,AP: a7=15; value of d making a2a7a12 greatest?, -,(a) 3?(b) 3/2?(c) 7?(d) 0,(d),Difficult
+Q178, Numbers ,Progressions ,MCQ,"AP: a1,�,an>0; value of 1/(a1+a2)+1/(a2+a3)+�+1/(an�1+an)?", -,(a) (1�n)/(a1+an)?(b) (n�1)/(a1+an)?(c) (n�1)/(a1�an)?(d) (1�n)/(a1+an),(b),Difficult
+Q179, Numbers ,Progressions ,MCQ,"HP: first 2 terms 2/5, 12/13; largest term?", -,(a) 4th?(b) 5th?(c) 6th?(d) 2nd,(d),Difficult
+Q180, Numbers ,Progressions ,MCQ,"Staircase: plank width=9 in, height=6,12,�; 24 planks; area in ft�?", -,(a) 112.5?(b) 107?(c) 118.5?(d) 105,(a),Difficult
+Q181, Numbers ,Progressions ,MCQ,Triangle midpoint process: sum of perimeters?, -,(a) 2P?(b) P�?(c) 3P?(d) P�/2,(a),Difficult
+Q182, Numbers ,Progressions ,MCQ,Triangle midpoint process: sum of areas?, -,(a) 4/5 A?(b) 4/3 A?(c) 3/4 A?(d) 5/4 A,(b),Difficult
+Q183, Numbers ,Progressions ,MCQ,Square side=40cm; midpoints formed squares infinitely; sum perimeter?, -,(a) 160(1+?2)?(b) 160(2+?2)?(c) 160(2�?2)?(d) 160(1�?2),(b),Difficult
+Q184, Numbers ,Progressions ,MCQ,Sum of areas of all squares?, -,(a) 1600?(b) 2400?(c) 2800?(d) Can�t Determine,(d),Difficult
+Q185, Numbers ,Progressions ,MCQ,AP: sum first n = � sum next n; ratio sum first 3n : sum first n?, -,(a) 5?(b) 6?(c) 7?(d) 8,(b),Difficult
+Q186, Numbers ,Progressions ,MCQ,Cancer cell: 1 cell breaks into 2 every hour; after 9h?, -,(a) 2?�1?(b) 2�??(c) 2??(d) 2�?�1,(c),Difficult

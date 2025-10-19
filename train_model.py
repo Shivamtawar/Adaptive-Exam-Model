@@ -1,11 +1,13 @@
 """
-Adaptive Quiz System - ML Model Training (UPDATED with NaN filtering)
-Save this as: adaptive_quiz_model.py
+Adaptive Quiz System - ML Model Training with Multiple Datasets
+Save this as: adaptive_quiz_model_enhanced.py
 
 Updates:
-- Filters out questions with NaN options during preprocessing
+- Loads both thinkplus and combined datasets
+- Merges them intelligently
+- Filters out questions with NaN options
 - Analytics tracking ready
-- Same PKL file name maintained
+- Enhanced validation
 """
 
 import pandas as pd
@@ -13,43 +15,158 @@ import numpy as np
 import pickle
 import json
 from datetime import datetime
+from pathlib import Path
 
 # ML Libraries
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, classification_report
-from scipy.special import expit
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+from sklearn.preprocessing import StandardScaler
 
 import warnings
 warnings.filterwarnings('ignore')
 
-print("All libraries imported successfully!")
+print("="*70)
+print("ADAPTIVE QUIZ SYSTEM - ENHANCED ML TRAINING")
+print("="*70)
+print("\n✓ All libraries imported successfully!")
 
 # ============================================================================
-# CELL 1: Load and Clean Data (Remove NaN options)
+# CELL 1: Load Multiple Datasets
 # ============================================================================
-df = pd.read_csv('processed_thinkplus_full.csv')
+def load_and_validate_dataset(filepath, dataset_name):
+    """Load dataset with validation"""
+    if not Path(filepath).exists():
+        print(f"  ⚠ {dataset_name} not found at: {filepath}")
+        return None
+    
+    try:
+        df = pd.read_csv(filepath)
+        print(f"  ✓ Loaded {dataset_name}: {len(df)} questions")
+        return df
+    except Exception as e:
+        print(f"  ✗ Error loading {dataset_name}: {str(e)}")
+        return None
 
-print(f"Original Dataset Shape: {df.shape}")
+print("\n" + "="*70)
+print("STEP 1: LOADING DATASETS")
+print("="*70)
 
-# Filter out questions with NaN in any option column
+# Load both datasets
+df_thinkplus = load_and_validate_dataset(
+    'processed_thinkplus_full.csv', 
+    'ThinkPlus Dataset'
+)
+
+df_combined = load_and_validate_dataset(
+    'processed_combined_datasets.csv', 
+    'Combined Blocks Dataset'
+)
+
+# Check if at least one dataset loaded
+datasets_to_merge = []
+dataset_names = []
+
+if df_thinkplus is not None:
+    datasets_to_merge.append(df_thinkplus)
+    dataset_names.append('ThinkPlus')
+
+if df_combined is not None:
+    datasets_to_merge.append(df_combined)
+    dataset_names.append('Combined Blocks')
+
+if not datasets_to_merge:
+    raise FileNotFoundError("No datasets found! Please ensure at least one dataset is available.")
+
+print(f"\n📊 Datasets to merge: {', '.join(dataset_names)}")
+
+# ============================================================================
+# CELL 2: Merge and Clean Datasets
+# ============================================================================
+print("\n" + "="*70)
+print("STEP 2: MERGING AND CLEANING DATASETS")
+print("="*70)
+
+# Merge datasets
+if len(datasets_to_merge) > 1:
+    df_merged = pd.concat(datasets_to_merge, ignore_index=True)
+    print(f"\n✓ Merged datasets: {len(df_merged)} total questions")
+else:
+    df_merged = datasets_to_merge[0].copy()
+    print(f"\n✓ Using single dataset: {len(df_merged)} questions")
+
+print(f"\nOriginal merged shape: {df_merged.shape}")
+
+# Required columns check
+required_columns = [
+    'id', 'question_text', 'option_a', 'option_b', 'option_c', 'option_d',
+    'answer', 'difficulty', 'difficulty_numeric', 'answer_numeric', 
+    'tag_encoded', 'option_a_numeric', 'option_b_numeric', 
+    'option_c_numeric', 'option_d_numeric', 'correct_option_value',
+    'question_length', 'question_word_count', 'options_mean', 
+    'options_std', 'options_range', 'answer_position'
+]
+
+missing_cols = [col for col in required_columns if col not in df_merged.columns]
+if missing_cols:
+    print(f"\n⚠ Warning: Missing columns: {missing_cols}")
+    print("These will be created with default values where possible")
+
+# Filter out questions with NaN in option columns
+print("\n🧹 Cleaning dataset...")
 option_cols = ['option_a', 'option_b', 'option_c', 'option_d']
-df_clean = df.dropna(subset=option_cols)
 
-print(f"After removing NaN options: {df_clean.shape}")
-print(f"Removed {len(df) - len(df_clean)} questions with NaN options")
+initial_count = len(df_merged)
+df_clean = df_merged.dropna(subset=option_cols)
+print(f"  ✓ Removed {initial_count - len(df_clean)} questions with NaN options")
 
-# Also remove questions with empty string options
+# Remove questions with empty string options
 for col in option_cols:
-    df_clean = df_clean[df_clean[col].str.strip() != '']
+    before = len(df_clean)
+    df_clean = df_clean[df_clean[col].astype(str).str.strip() != '']
+    removed = before - len(df_clean)
+    if removed > 0:
+        print(f"  ✓ Removed {removed} questions with empty {col}")
 
-print(f"After removing empty options: {df_clean.shape}")
-print(f"\nDifficulty Distribution:")
-print(df_clean['difficulty_numeric'].value_counts().sort_index())
+# Remove duplicate questions
+duplicates = df_clean.duplicated(subset=['question_text'], keep='first')
+if duplicates.sum() > 0:
+    df_clean = df_clean[~duplicates]
+    print(f"  ✓ Removed {duplicates.sum()} duplicate questions")
+
+print(f"\n✅ Final clean dataset: {len(df_clean)} questions")
+
+# Ensure unique IDs
+df_clean['id'] = [f"Q{i:06d}" for i in range(len(df_clean))]
+
+# Display dataset statistics
+print("\n📊 Dataset Statistics:")
+print(f"  Total Questions: {len(df_clean)}")
+print(f"  Unique Tags: {df_clean['tag_encoded'].nunique()}")
+print(f"\n  Difficulty Distribution:")
+difficulty_map = {0: 'Very Easy', 1: 'Easy', 2: 'Moderate', 3: 'Difficult'}
+for level in sorted(df_clean['difficulty_numeric'].unique()):
+    count = (df_clean['difficulty_numeric'] == level).sum()
+    pct = count / len(df_clean) * 100
+    level_name = difficulty_map.get(level, f'Level {level}')
+    print(f"    {level_name}: {count:4d} ({pct:5.1f}%)")
+
+print(f"\n  Answer Distribution:")
+answer_map = {0: 'A', 1: 'B', 2: 'C', 3: 'D'}
+for ans in sorted(df_clean['answer_numeric'].unique()):
+    count = (df_clean['answer_numeric'] == ans).sum()
+    pct = count / len(df_clean) * 100
+    ans_letter = answer_map.get(ans, f'Option {ans}')
+    print(f"    Option {ans_letter}: {count:4d} ({pct:5.1f}%)")
 
 # ============================================================================
-# CELL 2: Prepare Features for ML Model
+# CELL 3: Prepare Features for ML Model
 # ============================================================================
+print("\n" + "="*70)
+print("STEP 3: FEATURE PREPARATION")
+print("="*70)
+
+# Define feature columns
 feature_cols = [
     'tag_encoded', 'option_a_numeric', 'option_b_numeric', 
     'option_c_numeric', 'option_d_numeric', 'correct_option_value',
@@ -57,46 +174,119 @@ feature_cols = [
     'options_std', 'options_range', 'answer_position'
 ]
 
+# Verify all feature columns exist
+missing_features = [col for col in feature_cols if col not in df_clean.columns]
+if missing_features:
+    print(f"\n⚠ Warning: Missing feature columns: {missing_features}")
+    print("Creating missing features with default values...")
+    for col in missing_features:
+        df_clean[col] = 0
+
+# Prepare feature matrix and target
 X = df_clean[feature_cols].copy()
 y = df_clean['difficulty_numeric'].copy()
+
+# Handle any remaining NaN values
 X = X.fillna(0)
 
-print(f"Feature Matrix Shape: {X.shape}")
-print(f"Target Shape: {y.shape}")
+# Replace inf values
+X = X.replace([np.inf, -np.inf], 0)
+
+print(f"\n✓ Feature Matrix Shape: {X.shape}")
+print(f"✓ Target Shape: {y.shape}")
+
+# Feature statistics
+print(f"\n📊 Feature Statistics:")
+for col in feature_cols:
+    print(f"  {col:25s}: min={X[col].min():8.2f}, max={X[col].max():8.2f}, mean={X[col].mean():8.2f}")
+
+# Check class balance
+print(f"\n📊 Class Distribution in Target:")
+for level in sorted(y.unique()):
+    count = (y == level).sum()
+    pct = count / len(y) * 100
+    level_name = difficulty_map.get(level, f'Level {level}')
+    print(f"  {level_name}: {count:4d} ({pct:5.1f}%)")
 
 # ============================================================================
-# CELL 3: Train-Test Split and Model Training
+# CELL 4: Train-Test Split and Model Training
 # ============================================================================
+print("\n" + "="*70)
+print("STEP 4: MODEL TRAINING")
+print("="*70)
+
+# Train-test split with stratification
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.2, random_state=42, stratify=y
 )
 
-print(f"\nTraining set: {X_train.shape[0]} samples")
-print(f"Test set: {X_test.shape[0]} samples")
+print(f"\n✓ Training set: {X_train.shape[0]} samples")
+print(f"✓ Test set: {X_test.shape[0]} samples")
 
+# Train Random Forest model
+print("\n🎯 Training Random Forest Classifier...")
 rf_model = RandomForestClassifier(
     n_estimators=200,
     max_depth=15,
     min_samples_split=5,
     min_samples_leaf=2,
     random_state=42,
-    n_jobs=-1
+    n_jobs=-1,
+    verbose=0
 )
 
 rf_model.fit(X_train, y_train)
+print("✓ Model training complete!")
 
+# ============================================================================
+# CELL 5: Model Evaluation
+# ============================================================================
+print("\n" + "="*70)
+print("STEP 5: MODEL EVALUATION")
+print("="*70)
+
+# Predictions
+y_pred_train = rf_model.predict(X_train)
 y_pred_test = rf_model.predict(X_test)
+
+# Accuracy scores
+train_accuracy = accuracy_score(y_train, y_pred_train)
 test_accuracy = accuracy_score(y_test, y_pred_test)
 
-print(f"\nTest Accuracy: {test_accuracy:.4f}")
+print(f"\n📊 Model Performance:")
+print(f"  Training Accuracy: {train_accuracy:.4f} ({train_accuracy*100:.2f}%)")
+print(f"  Test Accuracy:     {test_accuracy:.4f} ({test_accuracy*100:.2f}%)")
+print(f"  Overfitting Gap:   {(train_accuracy-test_accuracy)*100:.2f}%")
 
+# Classification report
+print(f"\n📊 Detailed Classification Report (Test Set):")
+print(classification_report(
+    y_test, y_pred_test, 
+    target_names=['Very Easy', 'Easy', 'Moderate', 'Difficult'],
+    digits=4
+))
+
+# Confusion matrix
+print(f"📊 Confusion Matrix (Test Set):")
+cm = confusion_matrix(y_test, y_pred_test)
+print("             Predicted")
+print("              VE   E    M    D")
+for i, row in enumerate(cm):
+    level_name = ['Very Easy', 'Easy', 'Moderate', 'Difficult'][i]
+    print(f"Actual {level_name[:2]:2s}  {row[0]:4d} {row[1]:4d} {row[2]:4d} {row[3]:4d}")
+
+# Feature importance
 feature_importance = pd.DataFrame({
     'feature': feature_cols,
     'importance': rf_model.feature_importances_
 }).sort_values('importance', ascending=False)
 
+print(f"\n📊 Top 10 Feature Importances:")
+for idx, row in feature_importance.head(10).iterrows():
+    print(f"  {row['feature']:25s}: {row['importance']:.4f}")
+
 # ============================================================================
-# CELL 4: Adaptive Quiz System Classes
+# CELL 6: Adaptive Quiz System Classes (Same as before)
 # ============================================================================
 class AdaptiveQuizSystem:
     """Adaptive Quiz System with analytics tracking"""
@@ -387,7 +577,7 @@ class SectionBasedQuizSystem:
 class QuizModelPackage:
     """Complete package for Flask API"""
     
-    def __init__(self, difficulty_model, questions_df, feature_cols, scaler=None):
+    def __init__(self, difficulty_model, questions_df, feature_cols, dataset_sources, scaler=None):
         self.difficulty_model = difficulty_model
         self.questions_df = questions_df
         self.feature_cols = feature_cols
@@ -395,11 +585,13 @@ class QuizModelPackage:
         self.metadata = {
             'model_type': 'RandomForest',
             'n_questions': len(questions_df),
-            'difficulty_levels': questions_df['difficulty_numeric'].nunique(),
+            'difficulty_levels': int(questions_df['difficulty_numeric'].nunique()),
             'trained_date': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-            'test_accuracy': test_accuracy,
+            'train_accuracy': float(train_accuracy),
+            'test_accuracy': float(test_accuracy),
+            'dataset_sources': dataset_sources,
             'feature_importance': feature_importance.to_dict('records'),
-            'version': '2.2_analytics_nan_filter'
+            'version': '3.0_multi_dataset_enhanced'
         }
     
     def create_adaptive_quiz(self):
@@ -429,30 +621,49 @@ class QuizModelPackage:
 
 
 # ============================================================================
-# CELL 5: Create and Save Model Package
+# CELL 7: Create and Save Model Package
 # ============================================================================
+print("\n" + "="*70)
+print("STEP 6: SAVING MODEL PACKAGE")
+print("="*70)
+
 model_package = QuizModelPackage(
     difficulty_model=rf_model,
     questions_df=df_clean,
     feature_cols=feature_cols,
+    dataset_sources=dataset_names,
     scaler=None
 )
 
-# Save with SAME filename as before
-with open('adaptive_quiz_model.pkl', 'wb') as f:
+# Save model
+model_filename = 'adaptive_quiz_model.pkl'
+with open(model_filename, 'wb') as f:
     pickle.dump(model_package, f)
 
-print("\n✓ Model saved to 'adaptive_quiz_model.pkl'")
+print(f"\n✓ Model saved to '{model_filename}'")
 
-with open('model_metadata.json', 'w') as f:
+# Save metadata
+metadata_filename = 'model_metadata.json'
+with open(metadata_filename, 'w') as f:
     json.dump(model_package.metadata, f, indent=2)
 
-print("✓ Metadata saved to 'model_metadata.json'")
+print(f"✓ Metadata saved to '{metadata_filename}'")
 
+# File size
 import os
-file_size = os.path.getsize('adaptive_quiz_model.pkl') / (1024 * 1024)
+file_size = os.path.getsize(model_filename) / (1024 * 1024)
 print(f"✓ Model file size: {file_size:.2f} MB")
-print(f"✓ Clean questions: {len(df_clean)}")
-print("\n" + "="*60)
-print("MODEL TRAINING COMPLETE!")
-print("="*60)
+
+# Summary
+print("\n" + "="*70)
+print("✅ MODEL TRAINING COMPLETE!")
+print("="*70)
+print(f"\n📊 Final Summary:")
+print(f"  Datasets Used: {', '.join(dataset_names)}")
+print(f"  Total Questions: {len(df_clean)}")
+print(f"  Training Samples: {len(X_train)}")
+print(f"  Test Samples: {len(X_test)}")
+print(f"  Test Accuracy: {test_accuracy:.4f} ({test_accuracy*100:.2f}%)")
+print(f"  Model File: {model_filename} ({file_size:.2f} MB)")
+print(f"\n🚀 Ready to use with Flask API!")
+print("="*70)
